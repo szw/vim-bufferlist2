@@ -1,5 +1,5 @@
-VIM bufferlist
-==============
+Vim BufferList2
+===============
 
 Welcome
 -------
