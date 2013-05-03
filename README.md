@@ -4,7 +4,7 @@ Vim BufferList2
 Welcome
 -------
 
-This project is based on original Robert Lillack's great plugin:
+This project is based on original Robert Lillack's great
 [Vim-BufferList](https://github.com/roblillack/vim-bufferlist) plugin. However, instead of forking
 Rob's project I decided to create a new project based exactly on his original one. Partially because
 his project seems a bit abandoned, and also, the changes I've introduced into the code are radical
@@ -118,7 +118,7 @@ Put bufferlist.vim file into your `~/.vim/plugin` directory and set it up like t
 License
 -------
 
-Copyright(c) 2005, Robert Lillack <rob@burningsoda.com> - original plugin code
+Copyright(c) 2005, Robert Lillack <rob@burningsoda.com> - original plugin code<br />
 Copyright(c) 2013, Szymon Wrozynski <szymon@wrozynski.com> - further development
 
 Redistribution in any form with or without modification permitted.
