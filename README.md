@@ -91,6 +91,10 @@ useful to clean up "orphaned" buffers, if you just have closed the tab you were 
 <td>Deletes (closes) all forgotten buffers (unrelated with any tab)</td>
 </tr>
 <tr>
+<td><code>a</code></td>
+<td>Toggles between tab-friends (the ones related to the current tab) and all buffers</td>
+</tr>
+<tr>
 <td><code>q</code> or <code>F2</code></td>
 <td>Closes the list</td>
 </tr>
