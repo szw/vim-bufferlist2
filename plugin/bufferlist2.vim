@@ -1,6 +1,6 @@
 " vim-bufferlist2 - The Ultimate Buffer List
 " Maintainer:   Szymon Wrozynski
-" Version:      2.0.0
+" Version:      2.0.1
 "
 " Installation:
 " Place in ~/.vim/plugin/bufferlist2.vim or in case of Pathogen:
@@ -31,12 +31,24 @@ if !exists('g:BufferListMaxWidth')
   let g:BufferListMaxWidth = 40
 endif
 
+if !exists('g:BufferListHeight')
+  let g:BufferListHeight = 1
+endif
+
+if !exists('g:BufferListMaxHeight')
+  let g:BufferListMaxHeight = 10
+endif
+
 if !exists('g:BufferListShowUnnamed')
   let g:BufferListShowUnnamed = 2
 endif
 
 if !exists('g:BufferListShowTabFriends')
   let g:BufferListShowTabFriends = 2
+endif
+
+if !exists('g:BufferListBottom')
+  let g:BufferListBottom = 0
 endif
 
 if g:BufferListShowTabFriends
@@ -49,6 +61,7 @@ command! -nargs=0 -range BufferList :call <SID>BufferList(0)
 function! <SID>BufferList(internal)
   if !a:internal
     let s:tabfriendstoggle = (g:BufferListShowTabFriends == 2)
+    let t:BufferListStartWindow = winnr()
   endif
 
   " if we get called and the list is open --> close it
@@ -62,6 +75,96 @@ function! <SID>BufferList(internal)
     endif
   endif
 
+  if g:BufferListBottom
+    call <SID>BufferListHorizontal()
+  else
+    call <SID>BufferListVertical()
+  endif
+endfunction
+
+function! <SID>BufferListHorizontal()
+  let l:bufcount = bufnr('$')
+  let l:displayedbufs = 0
+  let l:activebuf = bufnr('')
+  let l:activebufline = 0
+  let l:buflist = ''
+  let l:bufnumbers = ''
+
+  " create the buffer first & set it up
+  exec 'silent! new __BUFFERLIST__'
+  silent! exe "wincmd J"
+  silent! exe "resize" g:BufferListHeight
+  call <SID>BufferListSetUpBuffer()
+
+  let l:width = winwidth(0)
+
+  " iterate through the buffers
+  let l:i = 0 | while l:i <= l:bufcount | let l:i += 1
+    if s:tabfriendstoggle && !exists('t:BufferListTabFriends[' . l:i . ']')
+      continue
+    endif
+
+    let l:bufname = bufname(l:i)
+
+    if g:BufferListShowUnnamed && !strlen(l:bufname)
+      if !((g:BufferListShowUnnamed == 2) && !getbufvar(l:i, '&modified')) || (bufwinnr(l:i) != -1)
+        let l:bufname = '[' . l:i . '*No Name]'
+      endif
+    endif
+
+    if strlen(l:bufname) && getbufvar(l:i, '&modifiable') && getbufvar(l:i, '&buflisted')
+      " adapt width and/or buffer name
+      if strlen(l:bufname) + 5 > l:width
+        let l:bufname = '…' . strpart(l:bufname, strlen(l:bufname) - l:width + 6)
+      endif
+
+      if bufwinnr(l:i) != -1
+        let l:bufname .= '*'
+      endif
+      if getbufvar(l:i, '&modified')
+        let l:bufname .= '+'
+      endif
+      " count displayed buffers
+      let l:displayedbufs += 1
+      " remember buffer numbers
+      let l:bufnumbers .= l:i . ':'
+      " remember the buffer that was active BEFORE showing the list
+      if l:activebuf == l:i
+        let l:activebufline = l:displayedbufs
+      endif
+      " fill the name with spaces --> gives a nice selection bar
+      " use MAX width here, because the width may change inside of this 'for' loop
+      while strlen(l:bufname) < l:width
+        let l:bufname .= ' '
+      endwhile
+      " add the name to the list
+      let l:buflist .=  '  ' . l:bufname . "\n"
+    endif
+  endwhile
+
+  " set up window height
+  if l:displayedbufs > g:BufferListHeight
+    if l:displayedbufs < g:BufferListMaxHeight
+      silent! exe "resize " . l:displayedbufs
+    else
+      silent! exe "resize " . g:BufferListMaxHeight
+    endif
+  endif
+
+  call <SID>BufferListDisplayList(l:displayedbufs, l:buflist, l:width)
+
+  " make the buffer count & the buffer numbers available
+  " for our other functions
+  let b:bufnumbers = l:bufnumbers
+  let b:bufcount = l:displayedbufs
+
+  " go to the correct line
+  call <SID>BufferListMove(l:activebufline)
+  normal! zb
+endfunction
+
+" toggled the buffer list on/off
+function! <SID>BufferListVertical()
   let l:bufcount = bufnr('$')
   let l:displayedbufs = 0
   let l:activebuf = bufnr('')
@@ -119,15 +222,21 @@ function! <SID>BufferList(internal)
     endif
   endwhile
 
-  " generate a variable to fill the buffer afterwards
-  " (we need this for "full window" color :)
-  let l:fill = "\n"
-  let l:i = 0 | while l:i < l:width | let l:i += 1
-    let l:fill = ' ' . l:fill
-  endwhile
-
   " now, create the buffer & set it up
   exec 'silent! ' . l:width . 'vne __BUFFERLIST__'
+  call <SID>BufferListSetUpBuffer()
+  call <SID>BufferListDisplayList(l:displayedbufs, l:buflist, l:width)
+
+  " make the buffer count & the buffer numbers available
+  " for our other functions
+  let b:bufnumbers = l:bufnumbers
+  let b:bufcount = l:displayedbufs
+
+  " go to the correct line
+  call <SID>BufferListMove(l:activebufline)
+endfunction
+
+function! <SID>BufferListSetUpBuffer()
   setlocal noshowcmd
   setlocal noswapfile
   setlocal buftype=nofile
@@ -145,24 +254,6 @@ function! <SID>BufferList(internal)
     hi def BufferNormal ctermfg=black ctermbg=white
     hi def BufferSelected ctermfg=white ctermbg=black
   endif
-
-  setlocal modifiable
-  if l:displayedbufs > 0
-    " input the buffer list, delete the trailing newline, & fill with blank lines
-    put! =l:buflist
-    " is there any way to NOT delete into a register? bummer...
-    "normal! Gdd$
-    normal! GkJ
-    while winheight(0) > line(".")
-      put =l:fill
-    endwhile
-  else
-    let l:i = 0 | while l:i < winheight(0) | let l:i += 1
-      put! =l:fill
-    endwhile
-    normal! 0
-  endif
-  setlocal nomodifiable
 
   " set up the keymap
   noremap <silent> <buffer> <CR> :call <SID>LoadBuffer()<CR>
@@ -200,14 +291,33 @@ function! <SID>BufferList(internal)
     map <silent> <buffer> f :call <SID>BufferListDetachTabFriend()<CR>
     map <silent> <buffer> F :call <SID>BufferListDeleteForeignBuffers()<CR>
   endif
+endfunction
 
-  " make the buffer count & the buffer numbers available
-  " for our other functions
-  let b:bufnumbers = l:bufnumbers
-  let b:bufcount = l:displayedbufs
+function! <SID>BufferListDisplayList(displayedbufs, buflist, width)
+  " generate a variable to fill the buffer afterwards
+  " (we need this for "full window" color :)
+  let l:fill = "\n"
+  let l:i = 0 | while l:i < a:width | let l:i += 1
+    let l:fill = ' ' . l:fill
+  endwhile
 
-  " go to the correct line
-  call <SID>BufferListMove(l:activebufline)
+  setlocal modifiable
+  if a:displayedbufs > 0
+    " input the buffer list, delete the trailing newline, & fill with blank lines
+    put! =a:buflist
+    " is there any way to NOT delete into a register? bummer...
+    "normal! Gdd$
+    normal! GkJ
+    while winheight(0) > line(".")
+      put =l:fill
+    endwhile
+  else
+    let l:i = 0 | while l:i < winheight(0) | let l:i += 1
+      put! =l:fill
+    endwhile
+    normal! 0
+  endif
+  setlocal nomodifiable
 endfunction
 
 " move the selection bar of the list:
@@ -272,6 +382,10 @@ function! <SID>LoadBuffer(...)
   let l:str = <SID>BufferListGetSelectedBuffer()
   " kill the buffer list
   bwipeout
+
+  if exists("t:BufferListStartWindow")
+    silent! exe t:BufferListStartWindow . "wincmd w"
+  endif
 
   if !empty(a:000)
     exec ":" . a:1

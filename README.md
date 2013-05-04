@@ -16,9 +16,9 @@ how many users it has and then how to proceed with further development :).
 About
 -----
 
-Upon keypress this script display a nice list of buffers on the left, which can be selected with
-mouse or keyboard. As soon as a buffer is selected (`Return` (or `s`, `v`, `t`), double click) the
-list disappears.
+Upon keypress this script display a nice list of buffers on the left (or at the bottom),
+which can be selected with mouse or keyboard. As soon as a buffer is selected
+(`Return` (or `s`, `v`, `t`), double click) the list disappears.
 
 The selection can be cancelled with the same key that is configured to open the list or by pressing
 `q`. Movement key and mouse (wheel) should work as one expects.
@@ -116,6 +116,9 @@ Put bufferlist.vim file into your `~/.vim/plugin` directory and set it up like t
     let g:BufferListShowTabFriends = 1
     let g:BufferListWidth = 25
     let g:BufferListMaxWidth = 50
+    let g:BufferListHeight = 5
+    let g:BufferListMaxHeight = 15
+    let g:BufferListBottom = 1
     hi BufferSelected term=reverse ctermfg=white ctermbg=red cterm=bold
     hi BufferNormal term=NONE ctermfg=black ctermbg=darkcyan cterm=NONE
 
