@@ -1,6 +1,6 @@
 " vim-bufferlist2 - The Ultimate Buffer List
 " Maintainer:   Szymon Wrozynski
-" Version:      2.0.1
+" Version:      2.0.2
 "
 " Installation:
 " Place in ~/.vim/plugin/bufferlist2.vim or in case of Pathogen:
@@ -261,6 +261,7 @@ function! <SID>BufferListSetUpBuffer()
   noremap <silent> <buffer> s :call <SID>LoadBuffer("sp")<CR>
   noremap <silent> <buffer> t :call <SID>LoadBuffer("tabnew")<CR>
   map <silent> <buffer> q :bwipeout<CR>
+  map <silent> <buffer> <ESC> :bwipeout<CR>
   map <silent> <buffer> j :call <SID>BufferListMove("down")<CR>
   map <silent> <buffer> k :call <SID>BufferListMove("up")<CR>
   map <silent> <buffer> d :call <SID>BufferListDeleteBuffer()<CR>

@@ -5,7 +5,7 @@ Welcome
 -------
 
 This project is based on original Robert Lillack's great
-[Vim-BufferList](https://github.com/roblillack/vim-bufferlist) plugin. However, instead of forking
+[Vim BufferList](https://github.com/roblillack/vim-bufferlist) plugin. However, instead of forking
 Rob's project I decided to create a new project based exactly on his original one. Partially because
 his project seems a bit abandoned, and also, the changes I've introduced into the code are radical
 and might be hard for future merging.
@@ -21,7 +21,7 @@ which can be selected with mouse or keyboard. As soon as a buffer is selected
 (`Return` (or `s`, `v`, `t`), double click) the list disappears.
 
 The selection can be cancelled with the same key that is configured to open the list or by pressing
-`q`. Movement key and mouse (wheel) should work as one expects.
+`q` or `Esc`. Movement key and mouse (wheel) should work as one expects.
 
 Buffers that are visible (in any window) are marked with `*`, ones that are modified are marked with
 `+`.
@@ -95,7 +95,7 @@ useful to clean up "orphaned" buffers, if you just have closed the tab you were 
 <td>Toggles between tab-friends (the ones related to the current tab) and all buffers</td>
 </tr>
 <tr>
-<td><code>q</code> or <code>F2</code></td>
+<td><code>q</code> / <code>Esc</code> / <code>F2</code></td>
 <td>Closes the list</td>
 </tr>
 </table>
