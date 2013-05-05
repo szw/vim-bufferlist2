@@ -110,7 +110,7 @@ Put bufferlist.vim file into your `~/.vim/plugin` directory. To open BufferList 
 By default it is mapped to `<F2>`. You can change it or even disable default mappings
 in your `.vimrc`. Here are all possible options of BufferList:
 
-### Possible options examples
+### Possible options examples ###
 
     let g:bufferlist_show_unnamed = 1
     let g:bufferlist_show_tab_friends = 1
@@ -119,6 +119,8 @@ in your `.vimrc`. Here are all possible options of BufferList:
     let g:bufferlist_height = 5
     let g:bufferlist_max_height = 15
     let g:bufferlist_stick_to_bottom = 1
+    let g:bufferlist_set_default_mapping = 0
+    let g:bufferlist_default_mapping_key = '<F3>'
     hi BufferSelected term=reverse ctermfg=white ctermbg=red cterm=bold
     hi BufferNormal term=NONE ctermfg=black ctermbg=darkcyan cterm=NONE
 
