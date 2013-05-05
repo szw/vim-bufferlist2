@@ -51,6 +51,10 @@ if !exists('g:BufferListBottom')
   let g:BufferListBottom = 0
 endif
 
+if !exists('g:BufferListDisableEsc')
+  let g:BufferListDisableEsc = 0
+endif
+
 if g:BufferListShowTabFriends
   au BufEnter * call <SID>BufferListAddTabFriend()
 endif
@@ -61,18 +65,19 @@ command! -nargs=0 -range BufferList :call <SID>BufferList(0)
 function! <SID>BufferList(internal)
   if !a:internal
     let s:tabfriendstoggle = (g:BufferListShowTabFriends == 2)
-    let t:BufferListStartWindow = winnr()
   endif
 
   " if we get called and the list is open --> close it
   if bufexists(bufnr("__BUFFERLIST__"))
     let l:buflistnr = bufnr("__BUFFERLIST__")
     let l:buflistwindow = bufwinnr(l:buflistnr)
-    exec ':' . l:buflistnr . 'bwipeout'
+    call <SID>BufferListKill(l:buflistnr)
     " if the list wasn't open, just the buffer existed, proceed with opening
     if l:buflistwindow != -1
       return
     endif
+  elseif !a:internal
+    let t:BufferListStartWindow = winnr()
   endif
 
   if g:BufferListBottom
@@ -236,6 +241,18 @@ function! <SID>BufferListVertical()
   call <SID>BufferListMove(l:activebufline)
 endfunction
 
+function! <SID>BufferListKill(buflistnr)
+  if a:buflistnr
+    silent! exe ':' . a:buflistnr . 'bwipeout'
+  else
+    bwipeout
+  end
+
+  if exists("t:BufferListStartWindow")
+    silent! exe t:BufferListStartWindow . "wincmd w"
+  endif
+endfunction
+
 function! <SID>BufferListSetUpBuffer()
   setlocal noshowcmd
   setlocal noswapfile
@@ -255,13 +272,32 @@ function! <SID>BufferListSetUpBuffer()
     hi def BufferSelected ctermfg=white ctermbg=black
   endif
 
+  if !g:BufferListDisableEsc
+    if (has('termresponse') && v:termresponse =~ "\<ESC>") || (&term =~? '\vxterm|<k?vt|gnome|screen|linux|ansi')
+      noremap <silent> <buffer> <esc>[\A <up>
+      noremap <silent> <buffer> <esc>[\B <down>
+      noremap <silent> <buffer> <esc>[\C <right>
+      noremap <silent> <buffer> <esc>[\D <left>
+      noremap <silent> <buffer> <esc>[\P <F1>
+      noremap <silent> <buffer> <esc>[\Q <F2>
+      noremap <silent> <buffer> <esc>[\R <F3>
+      noremap <silent> <buffer> <esc>[\S <F4>
+    end
+    noremap <silent> <buffer> <ESC> :call <SID>BufferListKill(0)<CR>
+    if &timeout
+      let b:timeoutlen = &timeoutlen
+      let b:ttimeoutlen = &ttimeoutlen
+      set timeoutlen=100 ttimeoutlen=100
+      au BufLeave <buffer> silent! exe "set timeoutlen=" . b:timeoutlen . " ttimeoutlen=" . b:ttimeoutlen
+    endif
+  endif
+
   " set up the keymap
   noremap <silent> <buffer> <CR> :call <SID>LoadBuffer()<CR>
   noremap <silent> <buffer> v :call <SID>LoadBuffer("vs")<CR>
   noremap <silent> <buffer> s :call <SID>LoadBuffer("sp")<CR>
   noremap <silent> <buffer> t :call <SID>LoadBuffer("tabnew")<CR>
-  map <silent> <buffer> q :bwipeout<CR>
-  map <silent> <buffer> <ESC> :bwipeout<CR>
+  map <silent> <buffer> q :call <SID>BufferListKill(0)<CR>
   map <silent> <buffer> j :call <SID>BufferListMove("down")<CR>
   map <silent> <buffer> k :call <SID>BufferListMove("up")<CR>
   map <silent> <buffer> d :call <SID>BufferListDeleteBuffer()<CR>
@@ -382,11 +418,7 @@ function! <SID>LoadBuffer(...)
   " get the selected buffer
   let l:str = <SID>BufferListGetSelectedBuffer()
   " kill the buffer list
-  bwipeout
-
-  if exists("t:BufferListStartWindow")
-    silent! exe t:BufferListStartWindow . "wincmd w"
-  endif
+  call <SID>BufferListKill(0)
 
   if !empty(a:000)
     exec ":" . a:1
@@ -402,7 +434,7 @@ function! <SID>BufferListDeleteBuffer()
   let l:str = <SID>BufferListGetSelectedBuffer()
   if !getbufvar(str2nr(l:str), '&modified')
     " kill the buffer list
-    bwipeout
+    call <SID>BufferListKill(0)
     " delete the selected buffer
     exec ":bdelete " . l:str
     " and reopen the list
@@ -427,7 +459,7 @@ function! <SID>BufferListDeleteHiddenBuffers()
       let l:visible[b] = 1
     endfor
   endfor
-  bwipeout
+  call <SID>BufferListKill(0)
   call <SID>BufferListKeepBuffersForKeys(l:visible)
   call <SID>BufferList(1)
 endfunction
@@ -438,7 +470,7 @@ function! <SID>BufferListDeleteForeignBuffers()
   for t in range(1, tabpagenr('$'))
     silent! call extend(l:friends, gettabvar(t, 'BufferListTabFriends'))
   endfor
-  bwipeout
+  call <SID>BufferListKill(0)
   call <SID>BufferListKeepBuffersForKeys(l:friends)
   call <SID>BufferList(1)
 endfunction
@@ -473,7 +505,7 @@ endfunction
 
 function! <SID>BufferListToggleTabFriends()
   let s:tabfriendstoggle = !s:tabfriendstoggle
-  bwipeout
+  call <SID>BufferListKill(0)
   call <SID>BufferList(1)
 endfunction
 
@@ -490,7 +522,7 @@ function! <SID>BufferListDetachTabFriend()
       endif
       call <SID>LoadBuffer()
     else
-      bwipeout
+      call <SID>BufferListKill(0)
     endif
     call remove(t:BufferListTabFriends, l:str)
     call <SID>BufferList(1)

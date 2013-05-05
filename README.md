@@ -119,6 +119,7 @@ Put bufferlist.vim file into your `~/.vim/plugin` directory and set it up like t
     let g:BufferListHeight = 5
     let g:BufferListMaxHeight = 15
     let g:BufferListBottom = 1
+    let g:BufferListDisableEsc = 0 " In case the <Esc> mapping is causing troubles
     hi BufferSelected term=reverse ctermfg=white ctermbg=red cterm=bold
     hi BufferNormal term=NONE ctermfg=black ctermbg=darkcyan cterm=NONE
 
