@@ -1,6 +1,6 @@
 " vim-bufferlist2 - The Ultimate Buffer List
 " Maintainer:   Szymon Wrozynski
-" Version:      2.0.2
+" Version:      2.0.3
 "
 " Installation:
 " Place in ~/.vim/plugin/bufferlist2.vim or in case of Pathogen:
@@ -18,242 +18,252 @@
 " Usage:
 " https://github.com/szw/vim-bufferlist2/blob/master/README.md
 
-if exists('g:BufferListLoaded')
+if exists('g:bufferlist_loaded')
   finish
 endif
-let g:BufferListLoaded = 1
+let g:bufferlist_loaded = 1
 
-if !exists('g:BufferListWidth')
-  let g:BufferListWidth = 20
+if !exists('g:bufferlist_width')
+  let g:bufferlist_width = 20
 endif
 
-if !exists('g:BufferListMaxWidth')
-  let g:BufferListMaxWidth = 40
+if !exists('g:bufferlist_max_width')
+  let g:bufferlist_max_width = 40
 endif
 
-if !exists('g:BufferListHeight')
-  let g:BufferListHeight = 1
+if !exists('g:bufferlist_height')
+  let g:bufferlist_height = 1
 endif
 
-if !exists('g:BufferListMaxHeight')
-  let g:BufferListMaxHeight = 10
+if !exists('g:bufferlist_max_height')
+  let g:bufferlist_max_height = 10
 endif
 
-if !exists('g:BufferListShowUnnamed')
-  let g:BufferListShowUnnamed = 2
+if !exists('g:bufferlist_show_unnamed')
+  let g:bufferlist_show_unnamed = 2
 endif
 
-if !exists('g:BufferListShowTabFriends')
-  let g:BufferListShowTabFriends = 2
+if !exists('g:bufferlist_show_tab_friends')
+  let g:bufferlist_show_tab_friends = 2
 endif
 
-if !exists('g:BufferListBottom')
-  let g:BufferListBottom = 0
+if !exists('g:bufferlist_stick_to_bottom')
+  let g:bufferlist_stick_to_bottom = 0
 endif
 
-if !exists('g:BufferListEnableEsc')
-  let g:BufferListEnableEsc = 0
+if !exists('g:bufferlist_set_default_mapping')
+    let g:bufferlist_set_default_mapping = 1
 endif
 
-if g:BufferListShowTabFriends
-  au BufEnter * call <SID>BufferListAddTabFriend()
+if !exists('g:bufferlist_default_mapping_key')
+    let g:bufferlist_default_mapping_key = '<F2>'
 endif
 
-command! -nargs=0 -range BufferList :call <SID>BufferList(0)
+command! -nargs=0 -range BufferList :call <SID>bufferlist_toggle(0)
+
+if g:bufferlist_set_default_mapping
+  silent! exe 'nnoremap <silent>' . g:bufferlist_default_mapping_key . ' :BufferList<CR>'
+  silent! exe 'vnoremap <silent>' . g:bufferlist_default_mapping_key . ' :BufferList<CR>'
+  silent! exe 'inoremap <silent>' . g:bufferlist_default_mapping_key . ' <C-[>:BufferList<CR>'
+endif
+
+if g:bufferlist_show_tab_friends
+  au BufEnter * call <SID>add_tab_friend()
+endif
 
 " toggled the buffer list on/off
-function! <SID>BufferList(internal)
+function! <SID>bufferlist_toggle(internal)
   if !a:internal
-    let s:tabfriendstoggle = (g:BufferListShowTabFriends == 2)
+    let s:tabfriendstoggle = (g:bufferlist_show_tab_friends == 2)
   endif
 
   " if we get called and the list is open --> close it
   if bufexists(bufnr("__BUFFERLIST__"))
-    let l:buflistnr = bufnr("__BUFFERLIST__")
-    let l:buflistwindow = bufwinnr(l:buflistnr)
-    call <SID>BufferListKill(l:buflistnr)
+    let buflistnr = bufnr("__BUFFERLIST__")
+    let buflistwindow = bufwinnr(buflistnr)
+    call <SID>kill(buflistnr)
     " if the list wasn't open, just the buffer existed, proceed with opening
-    if l:buflistwindow != -1
+    if buflistwindow != -1
       return
     endif
   elseif !a:internal
-    let t:BufferListStartWindow = winnr()
+    let t:bufferlist_start_window = winnr()
   endif
 
-  if g:BufferListBottom
-    call <SID>BufferListHorizontal()
+  if g:bufferlist_stick_to_bottom
+    call <SID>horizontal()
   else
-    call <SID>BufferListVertical()
+    call <SID>vertical()
   endif
 endfunction
 
-function! <SID>BufferListHorizontal()
-  let l:bufcount = bufnr('$')
-  let l:displayedbufs = 0
-  let l:activebuf = bufnr('')
-  let l:activebufline = 0
-  let l:buflist = ''
-  let l:bufnumbers = ''
+function! <SID>horizontal()
+  let bufcount = bufnr('$')
+  let displayedbufs = 0
+  let activebuf = bufnr('')
+  let activebufline = 0
+  let buflist = ''
+  let bufnumbers = ''
 
   " create the buffer first & set it up
   exec 'silent! new __BUFFERLIST__'
   silent! exe "wincmd J"
-  silent! exe "resize" g:BufferListHeight
-  call <SID>BufferListSetUpBuffer()
+  silent! exe "resize" g:bufferlist_height
+  call <SID>set_up_buffer()
 
-  let l:width = winwidth(0)
+  let width = winwidth(0)
 
   " iterate through the buffers
-  let l:i = 0 | while l:i <= l:bufcount | let l:i += 1
-    if s:tabfriendstoggle && !exists('t:BufferListTabFriends[' . l:i . ']')
+  let i = 0 | while i <= bufcount | let i += 1
+    if s:tabfriendstoggle && !exists('t:bufferlist_tab_friends[' . i . ']')
       continue
     endif
 
-    let l:bufname = bufname(l:i)
+    let bufname = bufname(i)
 
-    if g:BufferListShowUnnamed && !strlen(l:bufname)
-      if !((g:BufferListShowUnnamed == 2) && !getbufvar(l:i, '&modified')) || (bufwinnr(l:i) != -1)
-        let l:bufname = '[' . l:i . '*No Name]'
+    if g:bufferlist_show_unnamed && !strlen(bufname)
+      if !((g:bufferlist_show_unnamed == 2) && !getbufvar(i, '&modified')) || (bufwinnr(i) != -1)
+        let bufname = '[' . i . '*No Name]'
       endif
     endif
 
-    if strlen(l:bufname) && getbufvar(l:i, '&modifiable') && getbufvar(l:i, '&buflisted')
+    if strlen(bufname) && getbufvar(i, '&modifiable') && getbufvar(i, '&buflisted')
       " adapt width and/or buffer name
-      if strlen(l:bufname) + 5 > l:width
-        let l:bufname = '…' . strpart(l:bufname, strlen(l:bufname) - l:width + 6)
+      if strlen(bufname) + 5 > width
+        let bufname = '…' . strpart(bufname, strlen(bufname) - width + 6)
       endif
 
-      if bufwinnr(l:i) != -1
-        let l:bufname .= '*'
+      if bufwinnr(i) != -1
+        let bufname .= '*'
       endif
-      if getbufvar(l:i, '&modified')
-        let l:bufname .= '+'
+      if getbufvar(i, '&modified')
+        let bufname .= '+'
       endif
       " count displayed buffers
-      let l:displayedbufs += 1
+      let displayedbufs += 1
       " remember buffer numbers
-      let l:bufnumbers .= l:i . ':'
+      let bufnumbers .= i . ':'
       " remember the buffer that was active BEFORE showing the list
-      if l:activebuf == l:i
-        let l:activebufline = l:displayedbufs
+      if activebuf == i
+        let activebufline = displayedbufs
       endif
       " fill the name with spaces --> gives a nice selection bar
       " use MAX width here, because the width may change inside of this 'for' loop
-      while strlen(l:bufname) < l:width
-        let l:bufname .= ' '
+      while strlen(bufname) < width
+        let bufname .= ' '
       endwhile
       " add the name to the list
-      let l:buflist .=  '  ' . l:bufname . "\n"
+      let buflist .=  '  ' . bufname . "\n"
     endif
   endwhile
 
   " set up window height
-  if l:displayedbufs > g:BufferListHeight
-    if l:displayedbufs < g:BufferListMaxHeight
-      silent! exe "resize " . l:displayedbufs
+  if displayedbufs > g:bufferlist_height
+    if displayedbufs < g:bufferlist_max_height
+      silent! exe "resize " . displayedbufs
     else
-      silent! exe "resize " . g:BufferListMaxHeight
+      silent! exe "resize " . g:bufferlist_max_height
     endif
   endif
 
-  call <SID>BufferListDisplayList(l:displayedbufs, l:buflist, l:width)
+  call <SID>display_list(displayedbufs, buflist, width)
 
   " make the buffer count & the buffer numbers available
   " for our other functions
-  let b:bufnumbers = l:bufnumbers
-  let b:bufcount = l:displayedbufs
+  let b:bufnumbers = bufnumbers
+  let b:bufcount = displayedbufs
 
   " go to the correct line
-  call <SID>BufferListMove(l:activebufline)
+  call <SID>move(activebufline)
   normal! zb
 endfunction
 
 " toggled the buffer list on/off
-function! <SID>BufferListVertical()
-  let l:bufcount = bufnr('$')
-  let l:displayedbufs = 0
-  let l:activebuf = bufnr('')
-  let l:activebufline = 0
-  let l:buflist = ''
-  let l:bufnumbers = ''
-  let l:width = g:BufferListWidth
+function! <SID>vertical()
+  let bufcount = bufnr('$')
+  let displayedbufs = 0
+  let activebuf = bufnr('')
+  let activebufline = 0
+  let buflist = ''
+  let bufnumbers = ''
+  let width = g:bufferlist_width
 
   " iterate through the buffers
-  let l:i = 0 | while l:i <= l:bufcount | let l:i += 1
-    if s:tabfriendstoggle && !exists('t:BufferListTabFriends[' . l:i . ']')
+  let i = 0 | while i <= bufcount | let i += 1
+    if s:tabfriendstoggle && !exists('t:bufferlist_tab_friends[' . i . ']')
       continue
     endif
 
-    let l:bufname = bufname(l:i)
+    let bufname = bufname(i)
 
-    if g:BufferListShowUnnamed && !strlen(l:bufname)
-      if !((g:BufferListShowUnnamed == 2) && !getbufvar(l:i, '&modified')) || (bufwinnr(l:i) != -1)
-        let l:bufname = '[' . l:i . '*No Name]'
+    if g:bufferlist_show_unnamed && !strlen(bufname)
+      if !((g:bufferlist_show_unnamed == 2) && !getbufvar(i, '&modified')) || (bufwinnr(i) != -1)
+        let bufname = '[' . i . '*No Name]'
       endif
     endif
 
-    if strlen(l:bufname) && getbufvar(l:i, '&modifiable') && getbufvar(l:i, '&buflisted')
+    if strlen(bufname) && getbufvar(i, '&modifiable') && getbufvar(i, '&buflisted')
       " adapt width and/or buffer name
-      if l:width < (strlen(l:bufname) + 5)
-        if strlen(l:bufname) + 5 < g:BufferListMaxWidth
-          let l:width = strlen(l:bufname) + 5
+      if width < (strlen(bufname) + 5)
+        if strlen(bufname) + 5 < g:bufferlist_max_width
+          let width = strlen(bufname) + 5
         else
-          let l:width = g:BufferListMaxWidth
-          let l:bufname = '…' . strpart(l:bufname, strlen(l:bufname) - g:BufferListMaxWidth + 6)
+          let width = g:bufferlist_max_width
+          let bufname = '…' . strpart(bufname, strlen(bufname) - g:bufferlist_max_width + 6)
         endif
       endif
 
-      if bufwinnr(l:i) != -1
-        let l:bufname .= '*'
+      if bufwinnr(i) != -1
+        let bufname .= '*'
       endif
-      if getbufvar(l:i, '&modified')
-        let l:bufname .= '+'
+      if getbufvar(i, '&modified')
+        let bufname .= '+'
       endif
       " count displayed buffers
-      let l:displayedbufs += 1
+      let displayedbufs += 1
       " remember buffer numbers
-      let l:bufnumbers .= l:i . ':'
+      let bufnumbers .= i . ':'
       " remember the buffer that was active BEFORE showing the list
-      if l:activebuf == l:i
-        let l:activebufline = l:displayedbufs
+      if activebuf == i
+        let activebufline = displayedbufs
       endif
       " fill the name with spaces --> gives a nice selection bar
       " use MAX width here, because the width may change inside of this 'for' loop
-      while strlen(l:bufname) < g:BufferListMaxWidth
-        let l:bufname .= ' '
+      while strlen(bufname) < g:bufferlist_max_width
+        let bufname .= ' '
       endwhile
       " add the name to the list
-      let l:buflist .=  '  ' . l:bufname . "\n"
+      let buflist .=  '  ' . bufname . "\n"
     endif
   endwhile
 
   " now, create the buffer & set it up
-  exec 'silent! ' . l:width . 'vne __BUFFERLIST__'
-  call <SID>BufferListSetUpBuffer()
-  call <SID>BufferListDisplayList(l:displayedbufs, l:buflist, l:width)
+  exec 'silent! ' . width . 'vne __BUFFERLIST__'
+  call <SID>set_up_buffer()
+  call <SID>display_list(displayedbufs, buflist, width)
 
   " make the buffer count & the buffer numbers available
   " for our other functions
-  let b:bufnumbers = l:bufnumbers
-  let b:bufcount = l:displayedbufs
+  let b:bufnumbers = bufnumbers
+  let b:bufcount = displayedbufs
 
   " go to the correct line
-  call <SID>BufferListMove(l:activebufline)
+  call <SID>move(activebufline)
 endfunction
 
-function! <SID>BufferListKill(buflistnr)
+function! <SID>kill(buflistnr)
   if a:buflistnr
     silent! exe ':' . a:buflistnr . 'bwipeout'
   else
     bwipeout
   end
 
-  if exists("t:BufferListStartWindow")
-    silent! exe t:BufferListStartWindow . "wincmd w"
+  if exists("t:bufferlist_start_window")
+    silent! exe t:bufferlist_start_window . "wincmd w"
   endif
 endfunction
 
-function! <SID>BufferListSetUpBuffer()
+function! <SID>set_up_buffer()
   setlocal noshowcmd
   setlocal noswapfile
   setlocal buftype=nofile
@@ -272,42 +282,22 @@ function! <SID>BufferListSetUpBuffer()
     hi def BufferSelected ctermfg=white ctermbg=black
   endif
 
-  if g:BufferListEnableEsc
-    if (has('termresponse') && v:termresponse =~ "\<ESC>") || (&term =~? '\vxterm|<k?vt|gnome|screen|linux|ansi')
-      noremap <silent> <buffer> <esc>[\A <up>
-      noremap <silent> <buffer> <esc>[\B <down>
-      noremap <silent> <buffer> <esc>[\C <right>
-      noremap <silent> <buffer> <esc>[\D <left>
-      noremap <silent> <buffer> <esc>[\P <F1>
-      noremap <silent> <buffer> <esc>[\Q <F2>
-      noremap <silent> <buffer> <esc>[\R <F3>
-      noremap <silent> <buffer> <esc>[\S <F4>
-    end
-    noremap <silent> <buffer> <ESC> :call <SID>BufferListKill(0)<CR>
-    if &timeout
-      let b:timeoutlen = &timeoutlen
-      let b:ttimeoutlen = &ttimeoutlen
-      set timeoutlen=100 ttimeoutlen=100
-      au BufLeave <buffer> silent! exe "set timeoutlen=" . b:timeoutlen . " ttimeoutlen=" . b:ttimeoutlen
-    endif
-  endif
-
   " set up the keymap
-  noremap <silent> <buffer> <CR> :call <SID>LoadBuffer()<CR>
-  noremap <silent> <buffer> v :call <SID>LoadBuffer("vs")<CR>
-  noremap <silent> <buffer> s :call <SID>LoadBuffer("sp")<CR>
-  noremap <silent> <buffer> t :call <SID>LoadBuffer("tabnew")<CR>
-  map <silent> <buffer> q :call <SID>BufferListKill(0)<CR>
-  map <silent> <buffer> j :call <SID>BufferListMove("down")<CR>
-  map <silent> <buffer> k :call <SID>BufferListMove("up")<CR>
-  map <silent> <buffer> d :call <SID>BufferListDeleteBuffer()<CR>
-  map <silent> <buffer> D :call <SID>BufferListDeleteHiddenBuffers()<CR>
-  map <silent> <buffer> <MouseDown> :call <SID>BufferListMove("up")<CR>
-  map <silent> <buffer> <MouseUp> :call <SID>BufferListMove("down")<CR>
+  noremap <silent> <buffer> <CR> :call <SID>load_buffer()<CR>
+  noremap <silent> <buffer> v :call <SID>load_buffer("vs")<CR>
+  noremap <silent> <buffer> s :call <SID>load_buffer("sp")<CR>
+  noremap <silent> <buffer> t :call <SID>load_buffer("tabnew")<CR>
+  map <silent> <buffer> q :call <SID>kill(0)<CR>
+  map <silent> <buffer> j :call <SID>move("down")<CR>
+  map <silent> <buffer> k :call <SID>move("up")<CR>
+  map <silent> <buffer> d :call <SID>delete_buffer()<CR>
+  map <silent> <buffer> D :call <SID>delete_hidden_buffers()<CR>
+  map <silent> <buffer> <MouseDown> :call <SID>move("up")<CR>
+  map <silent> <buffer> <MouseUp> :call <SID>move("down")<CR>
   map <silent> <buffer> <LeftDrag> <Nop>
-  map <silent> <buffer> <LeftRelease> :call <SID>BufferListMove("mouse")<CR>
-  map <silent> <buffer> <2-LeftMouse> :call <SID>BufferListMove("mouse")<CR>
-    \:call <SID>LoadBuffer()<CR>
+  map <silent> <buffer> <LeftRelease> :call <SID>move("mouse")<CR>
+  map <silent> <buffer> <2-LeftMouse> :call <SID>move("mouse")<CR>
+    \:call <SID>load_buffer()<CR>
   map <silent> <buffer> <Down> j
   map <silent> <buffer> <Up> k
   map <buffer> h <Nop>
@@ -320,22 +310,22 @@ function! <SID>BufferListSetUpBuffer()
   map <buffer> A <Nop>
   map <buffer> o <Nop>
   map <buffer> O <Nop>
-  map <silent> <buffer> <Home> :call <SID>BufferListMove(1)<CR>
-  map <silent> <buffer> <End> :call <SID>BufferListMove(line("$"))<CR>
+  map <silent> <buffer> <Home> :call <SID>move(1)<CR>
+  map <silent> <buffer> <End> :call <SID>move(line("$"))<CR>
 
-  if g:BufferListShowTabFriends
-    map <silent> <buffer> a :call <SID>BufferListToggleTabFriends()<CR>
-    map <silent> <buffer> f :call <SID>BufferListDetachTabFriend()<CR>
-    map <silent> <buffer> F :call <SID>BufferListDeleteForeignBuffers()<CR>
+  if g:bufferlist_show_tab_friends
+    map <silent> <buffer> a :call <SID>toggle_tab_friends()<CR>
+    map <silent> <buffer> f :call <SID>detach_tab_friend()<CR>
+    map <silent> <buffer> F :call <SID>delete_foreign_buffers()<CR>
   endif
 endfunction
 
-function! <SID>BufferListDisplayList(displayedbufs, buflist, width)
+function! <SID>display_list(displayedbufs, buflist, width)
   " generate a variable to fill the buffer afterwards
   " (we need this for "full window" color :)
-  let l:fill = "\n"
-  let l:i = 0 | while l:i < a:width | let l:i += 1
-    let l:fill = ' ' . l:fill
+  let fill = "\n"
+  let i = 0 | while i < a:width | let i += 1
+    let fill = ' ' . fill
   endwhile
 
   setlocal modifiable
@@ -346,11 +336,11 @@ function! <SID>BufferListDisplayList(displayedbufs, buflist, width)
     "normal! Gdd$
     normal! GkJ
     while winheight(0) > line(".")
-      silent! put =l:fill
+      silent! put =fill
     endwhile
   else
-    let l:i = 0 | while l:i < winheight(0) | let l:i += 1
-      silent! put! =l:fill
+    let i = 0 | while i < winheight(0) | let i += 1
+      silent! put! =fill
     endwhile
     normal! 0
   endif
@@ -360,11 +350,11 @@ endfunction
 " move the selection bar of the list:
 " where can be "up"/"down"/"mouse" or
 " a line number
-function! <SID>BufferListMove(where)
+function! <SID>move(where)
   if b:bufcount < 1
     return
   endif
-  let l:newpos = 0
+  let newpos = 0
   if !exists('b:lastline')
     let b:lastline = 0
   endif
@@ -373,8 +363,8 @@ function! <SID>BufferListMove(where)
   " the mouse was pressed: remember which line
   " and go back to the original location for now
   if a:where == "mouse"
-    let l:newpos = line(".")
-    call <SID>BufferListGoto(b:lastline)
+    let newpos = line(".")
+    call <SID>goto(b:lastline)
   endif
 
   " exchange the first char (>) with a space
@@ -382,13 +372,13 @@ function! <SID>BufferListMove(where)
 
   " go where the user want's us to go
   if a:where == "up"
-    call <SID>BufferListGoto(line(".")-1)
+    call <SID>goto(line(".")-1)
   elseif a:where == "down"
-    call <SID>BufferListGoto(line(".")+1)
+    call <SID>goto(line(".")+1)
   elseif a:where == "mouse"
-    call <SID>BufferListGoto(l:newpos)
+    call <SID>goto(newpos)
   else
-    call <SID>BufferListGoto(a:where)
+    call <SID>goto(a:where)
   endif
 
   " and mark this line with a >
@@ -402,7 +392,7 @@ function! <SID>BufferListMove(where)
 endfunction
 
 " tries to set the cursor to a line of the buffer list
-function! <SID>BufferListGoto(line)
+function! <SID>goto(line)
   if b:bufcount < 1 | return | endif
   if a:line < 1
     call cursor(1, 1)
@@ -414,35 +404,35 @@ function! <SID>BufferListGoto(line)
 endfunction
 
 " loads the selected buffer
-function! <SID>LoadBuffer(...)
+function! <SID>load_buffer(...)
   " get the selected buffer
-  let l:str = <SID>BufferListGetSelectedBuffer()
+  let str = <SID>get_selected_buffer()
   " kill the buffer list
-  call <SID>BufferListKill(0)
+  call <SID>kill(0)
 
   if !empty(a:000)
     exec ":" . a:1
   endif
 
   " ...and switch to the buffer number
-  exec ":b " . l:str
+  exec ":b " . str
 endfunction
 
 " deletes the selected buffer
-function! <SID>BufferListDeleteBuffer()
+function! <SID>delete_buffer()
   " get the selected buffer
-  let l:str = <SID>BufferListGetSelectedBuffer()
-  if !getbufvar(str2nr(l:str), '&modified')
+  let str = <SID>get_selected_buffer()
+  if !getbufvar(str2nr(str), '&modified')
     " kill the buffer list
-    call <SID>BufferListKill(0)
+    call <SID>kill(0)
     " delete the selected buffer
-    exec ":bdelete " . l:str
+    exec ":bdelete " . str
     " and reopen the list
-    call <SID>BufferList(1)
+    call <SID>bufferlist_toggle(1)
   endif
 endfunction
 
-function! <SID>BufferListKeepBuffersForKeys(dict)
+function! <SID>keep_buffers_for_keys(dict)
   for b in range(1, bufnr('$'))
     if buflisted(b) && !has_key(a:dict, b) && !getbufvar(b, '&modified')
       exe ':bdelete ' . b
@@ -452,79 +442,79 @@ endfunction
 
 " deletes all hidden buffers
 " taken from: http://stackoverflow.com/a/3180886
-function! <SID>BufferListDeleteHiddenBuffers()
-  let l:visible = {}
+function! <SID>delete_hidden_buffers()
+  let visible = {}
   for t in range(1, tabpagenr('$'))
     for b in tabpagebuflist(t)
-      let l:visible[b] = 1
+      let visible[b] = 1
     endfor
   endfor
-  call <SID>BufferListKill(0)
-  call <SID>BufferListKeepBuffersForKeys(l:visible)
-  call <SID>BufferList(1)
+  call <SID>kill(0)
+  call <SID>keep_buffers_for_keys(visible)
+  call <SID>bufferlist_toggle(1)
 endfunction
 
 " deletes all foreign (not tab friend) buffers
-function! <SID>BufferListDeleteForeignBuffers()
-  let l:friends = {}
+function! <SID>delete_foreign_buffers()
+  let friends = {}
   for t in range(1, tabpagenr('$'))
-    silent! call extend(l:friends, gettabvar(t, 'BufferListTabFriends'))
+    silent! call extend(friends, gettabvar(t, 'bufferlist_tab_friends'))
   endfor
-  call <SID>BufferListKill(0)
-  call <SID>BufferListKeepBuffersForKeys(l:friends)
-  call <SID>BufferList(1)
+  call <SID>kill(0)
+  call <SID>keep_buffers_for_keys(friends)
+  call <SID>bufferlist_toggle(1)
 endfunction
 
-function! <SID>BufferListGetSelectedBuffer()
+function! <SID>get_selected_buffer()
   " this is our string containing the buffer numbers in
   " the order of the list (separated by ':')
-  let l:str = b:bufnumbers
+  let str = b:bufnumbers
 
   " remove all numbers BEFORE the one we want
-  let l:i = 1 | while l:i < line(".") | let l:i += 1
-    let l:str = strpart(l:str, stridx(l:str, ':') + 1)
+  let i = 1 | while i < line(".") | let i += 1
+    let str = strpart(str, stridx(str, ':') + 1)
   endwhile
 
   " and everything AFTER
-  let l:str = strpart(l:str, 0, stridx(l:str, ':'))
+  let str = strpart(str, 0, stridx(str, ':'))
 
-  return l:str
+  return str
 endfunction
 
-function! <SID>BufferListAddTabFriend()
-  if !exists('t:BufferListTabFriends')
-    let t:BufferListTabFriends = {}
+function! <SID>add_tab_friend()
+  if !exists('t:bufferlist_tab_friends')
+    let t:bufferlist_tab_friends = {}
   endif
 
-  let l:current = bufnr('%')
+  let current = bufnr('%')
 
-  if getbufvar(l:current, '&modifiable') && getbufvar(l:current, '&buflisted') && l:current != bufnr("__BUFFERLIST__")
-    let t:BufferListTabFriends[l:current] = 1
+  if getbufvar(current, '&modifiable') && getbufvar(current, '&buflisted') && current != bufnr("__BUFFERLIST__")
+    let t:bufferlist_tab_friends[current] = 1
   endif
 endfunction
 
-function! <SID>BufferListToggleTabFriends()
+function! <SID>toggle_tab_friends()
   let s:tabfriendstoggle = !s:tabfriendstoggle
-  call <SID>BufferListKill(0)
-  call <SID>BufferList(1)
+  call <SID>kill(0)
+  call <SID>bufferlist_toggle(1)
 endfunction
 
-function! <SID>BufferListDetachTabFriend()
-  let l:str = <SID>BufferListGetSelectedBuffer()
-  if exists('t:BufferListTabFriends[' . l:str . ']')
-    if bufwinnr(str2nr(l:str)) != -1
-      call <SID>BufferListMove("down")
-      if <SID>BufferListGetSelectedBuffer() == l:str
-        call <SID>BufferListMove("up")
-        if <SID>BufferListGetSelectedBuffer() == l:str
+function! <SID>detach_tab_friend()
+  let str = <SID>get_selected_buffer()
+  if exists('t:bufferlist_tab_friends[' . str . ']')
+    if bufwinnr(str2nr(str)) != -1
+      call <SID>move("down")
+      if <SID>get_selected_buffer() == str
+        call <SID>move("up")
+        if <SID>get_selected_buffer() == str
           return
         endif
       endif
-      call <SID>LoadBuffer()
+      call <SID>load_buffer()
     else
-      call <SID>BufferListKill(0)
+      call <SID>kill(0)
     endif
-    call remove(t:BufferListTabFriends, l:str)
-    call <SID>BufferList(1)
+    call remove(t:bufferlist_tab_friends, str)
+    call <SID>bufferlist_toggle(1)
   endif
 endfunction

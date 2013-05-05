@@ -21,16 +21,16 @@ which can be selected with mouse or keyboard. As soon as a buffer is selected
 (`Return` (or `s`, `v`, `t`), double click) the list disappears.
 
 The selection can be cancelled with the same key that is configured to open the list or by pressing
-`q` or `Esc`. Movement key and mouse (wheel) should work as one expects.
+`q`. Movement key and mouse (wheel) should work as one expects.
 
 Buffers that are visible (in any window) are marked with `*`, ones that are modified are marked with
 `+`.
 
-You can adjust the displaying of unnamed buffers. If you set `g:BufferListShowUnnamed = 1` then
+You can adjust the displaying of unnamed buffers. If you set `g:bufferlist_show_unnamed = 1` then
 unnamed buffers will be shown on the list any time. However, if you set this value to `2` (default),
 unnamed buffers will be displayed only if they are modified or just visible on the screen.
 
-Of course you can hide unnamed buffers permanently by `g:BufferListShowUnnamed = 0`.
+Of course you can hide unnamed buffers permanently by `g:bufferlist_show_unnamed = 0`.
 
 To delete a buffer from the list (i.e. close the file) press `d`.
 
@@ -40,8 +40,8 @@ If you want to toggle between all buffers view and those related with the curren
 `a`.
 
 *Related* means buffers seen in that tab at least once. This feature, called internally *tab
-friends*, can be turned off by setting `g:BufferListShowTabFriends = 0`. To see all buffers by
-default switch `g:BufferListShowTabFriends = 1`. If you set `g:BufferListShowTabFriends = 2`
+friends*, can be turned off by setting `g:bufferlist_show_tab_friends = 0`. To see all buffers by
+default switch `g:bufferlist_show_tab_friends = 1`. If you set `g:bufferlist_show_tab_friends = 2`
 (default) tab friends are turned on and visible by default. Of course, the `a` key can toggle the
 view all the time.
 
@@ -95,31 +95,30 @@ useful to clean up "orphaned" buffers, if you just have closed the tab you were 
 <td>Toggles between tab-friends (the ones related to the current tab) and all buffers</td>
 </tr>
 <tr>
-<td><code>q</code> / <code>Esc</code>&#42; / <code>F2</code>&#42;&#42;</td>
-<td>Closes the list. <br/>&#42; - requires <code>g:BufferListEnableEsc = 1</code><br/>&#42;&#42; - depends on settings</td>
+<td><code>q</code> / <code>F2</code>&#42;</td>
+<td>Closes the list <br/>&#42; - depends on settings</td>
 </tr>
 </table>
 
 Usage
 -----
 
-Put bufferlist.vim file into your `~/.vim/plugin` directory and set it up like this in your
-`~/.vimrc`:
+Put bufferlist.vim file into your `~/.vim/plugin` directory. To open BufferList there is a command:
 
-### Needed
+    :BufferList
 
-    map <silent> <F2> :BufferList<CR>
+By default it is mapped to `<F2>`. You can change it or even disable default mappings
+in your `.vimrc`. Here are all possible options of BufferList:
 
-### Optional
+### Possible options examples
 
-    let g:BufferListShowUnnamed = 1
-    let g:BufferListShowTabFriends = 1
-    let g:BufferListWidth = 25
-    let g:BufferListMaxWidth = 50
-    let g:BufferListHeight = 5
-    let g:BufferListMaxHeight = 15
-    let g:BufferListBottom = 1
-    let g:BufferListEnableEsc = 1
+    let g:bufferlist_show_unnamed = 1
+    let g:bufferlist_show_tab_friends = 1
+    let g:bufferlist_width = 25
+    let g:bufferlist_max_width = 50
+    let g:bufferlist_height = 5
+    let g:bufferlist_max_height = 15
+    let g:bufferlist_stick_to_bottom = 1
     hi BufferSelected term=reverse ctermfg=white ctermbg=red cterm=bold
     hi BufferNormal term=NONE ctermfg=black ctermbg=darkcyan cterm=NONE
 
