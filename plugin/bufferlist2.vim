@@ -341,16 +341,16 @@ function! <SID>BufferListDisplayList(displayedbufs, buflist, width)
   setlocal modifiable
   if a:displayedbufs > 0
     " input the buffer list, delete the trailing newline, & fill with blank lines
-    put! =a:buflist
+    silent! put! =a:buflist
     " is there any way to NOT delete into a register? bummer...
     "normal! Gdd$
     normal! GkJ
     while winheight(0) > line(".")
-      put =l:fill
+      silent! put =l:fill
     endwhile
   else
     let l:i = 0 | while l:i < winheight(0) | let l:i += 1
-      put! =l:fill
+      silent! put! =l:fill
     endwhile
     normal! 0
   endif
