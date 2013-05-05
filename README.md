@@ -95,8 +95,8 @@ useful to clean up "orphaned" buffers, if you just have closed the tab you were 
 <td>Toggles between tab-friends (the ones related to the current tab) and all buffers</td>
 </tr>
 <tr>
-<td><code>q</code> / <code>Esc</code> / <code>F2</code></td>
-<td>Closes the list</td>
+<td><code>q</code> / <code>Esc</code>&#42; / <code>F2</code>&#42;&#42;</td>
+<td>Closes the list. <br/>&#42; - requires <code>g:BufferListEnableEsc = 1</code><br/>&#42;&#42; - depends on settings</td>
 </tr>
 </table>
 
@@ -119,7 +119,7 @@ Put bufferlist.vim file into your `~/.vim/plugin` directory and set it up like t
     let g:BufferListHeight = 5
     let g:BufferListMaxHeight = 15
     let g:BufferListBottom = 1
-    let g:BufferListDisableEsc = 0 " In case the <Esc> mapping is causing troubles
+    let g:BufferListEnableEsc = 1
     hi BufferSelected term=reverse ctermfg=white ctermbg=red cterm=bold
     hi BufferNormal term=NONE ctermfg=black ctermbg=darkcyan cterm=NONE
 

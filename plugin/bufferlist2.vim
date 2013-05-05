@@ -51,8 +51,8 @@ if !exists('g:BufferListBottom')
   let g:BufferListBottom = 0
 endif
 
-if !exists('g:BufferListDisableEsc')
-  let g:BufferListDisableEsc = 0
+if !exists('g:BufferListEnableEsc')
+  let g:BufferListEnableEsc = 0
 endif
 
 if g:BufferListShowTabFriends
@@ -272,7 +272,7 @@ function! <SID>BufferListSetUpBuffer()
     hi def BufferSelected ctermfg=white ctermbg=black
   endif
 
-  if !g:BufferListDisableEsc
+  if g:BufferListEnableEsc
     if (has('termresponse') && v:termresponse =~ "\<ESC>") || (&term =~? '\vxterm|<k?vt|gnome|screen|linux|ansi')
       noremap <silent> <buffer> <esc>[\A <up>
       noremap <silent> <buffer> <esc>[\B <down>
