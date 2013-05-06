@@ -418,16 +418,38 @@ function! <SID>load_buffer(...)
   exec ":b " . str
 endfunction
 
+function! <SID>load_buffer_into_window(winnr)
+  if exists("t:bufferlist_start_window")
+    let old_start_window = t:bufferlist_start_window
+    let t:bufferlist_start_window = a:winnr
+  endif
+  call <SID>load_buffer()
+  if exists("old_start_window")
+    let t:bufferlist_start_window = old_start_window
+  endif
+endfunction
+
 " deletes the selected buffer
 function! <SID>delete_buffer()
-  " get the selected buffer
   let str = <SID>get_selected_buffer()
   if !getbufvar(str2nr(str), '&modified')
-    " kill the buffer list
-    call <SID>kill(0)
-    " delete the selected buffer
+    let selected_buffer_window = bufwinnr(str2nr(str))
+    if selected_buffer_window != -1
+      call <SID>move("down")
+      if <SID>get_selected_buffer() == str
+        call <SID>move("up")
+        if <SID>get_selected_buffer() == str
+          call <SID>kill(0)
+        else
+          call <SID>load_buffer_into_window(selected_buffer_window)
+        endif
+      else
+        call <SID>load_buffer_into_window(selected_buffer_window)
+      endif
+    else
+      call <SID>kill(0)
+    endif
     exec ":bdelete " . str
-    " and reopen the list
     call <SID>bufferlist_toggle(1)
   endif
 endfunction
@@ -502,7 +524,8 @@ endfunction
 function! <SID>detach_tab_friend()
   let str = <SID>get_selected_buffer()
   if exists('t:bufferlist_tab_friends[' . str . ']')
-    if bufwinnr(str2nr(str)) != -1
+    let selected_buffer_window = bufwinnr(str2nr(str))
+    if selected_buffer_window != -1
       call <SID>move("down")
       if <SID>get_selected_buffer() == str
         call <SID>move("up")
@@ -510,7 +533,7 @@ function! <SID>detach_tab_friend()
           return
         endif
       endif
-      call <SID>load_buffer()
+      call <SID>load_buffer_into_window(selected_buffer_window)
     else
       call <SID>kill(0)
     endif
