@@ -273,6 +273,13 @@ function! <SID>set_up_buffer()
   setlocal nowrap
   setlocal nonumber
 
+  if &timeout
+    let b:old_timeoutlen = &timeoutlen
+    set timeoutlen=10
+    au BufEnter <buffer> set timeoutlen=10
+    au BufLeave <buffer> silent! exe "set timeoutlen=" . b:old_timeoutlen
+  endif
+
   " set up syntax highlighting
   if has("syntax")
     syn clear
