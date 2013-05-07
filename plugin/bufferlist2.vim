@@ -1,6 +1,6 @@
 " vim-bufferlist2 - The Ultimate Buffer List
 " Maintainer:   Szymon Wrozynski
-" Version:      2.0.3
+" Version:      2.0.4
 "
 " Installation:
 " Place in ~/.vim/plugin/bufferlist2.vim or in case of Pathogen:
@@ -57,6 +57,10 @@ endif
 
 if !exists('g:bufferlist_default_mapping_key')
     let g:bufferlist_default_mapping_key = '<F2>'
+endif
+
+if !exists('g:bufferlist_cyclic_list')
+  let g:bufferlist_cyclic_list = 1
 endif
 
 command! -nargs=0 -range BufferList :call <SID>bufferlist_toggle(0)
@@ -402,9 +406,17 @@ endfunction
 function! <SID>goto(line)
   if b:bufcount < 1 | return | endif
   if a:line < 1
-    call cursor(1, 1)
+    if g:bufferlist_cyclic_list
+      call <SID>goto(b:bufcount - a:line)
+    else
+      call cursor(1, 1)
+    endif
   elseif a:line > b:bufcount
-    call cursor(b:bufcount, 1)
+    if g:bufferlist_cyclic_list
+      call <SID>goto(a:line - b:bufcount)
+    else
+      call cursor(b:bufcount, 1)
+    endif
   else
     call cursor(a:line, 1)
   endif

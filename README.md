@@ -119,6 +119,7 @@ in your `.vimrc`. Here are all possible options of BufferList:
     let g:bufferlist_height = 5
     let g:bufferlist_max_height = 15
     let g:bufferlist_stick_to_bottom = 1
+    let g:bufferlist_cyclic_list = 0
     let g:bufferlist_set_default_mapping = 0
     let g:bufferlist_default_mapping_key = '<F3>'
     hi BufferSelected term=reverse ctermfg=white ctermbg=red cterm=bold
