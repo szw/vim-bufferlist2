@@ -1,6 +1,6 @@
 " vim-bufferlist2 - The Ultimate Buffer List
 " Maintainer:   Szymon Wrozynski
-" Version:      2.0.4
+" Version:      2.0.5
 "
 " Installation:
 " Place in ~/.vim/plugin/bufferlist2.vim or in case of Pathogen:
@@ -82,16 +82,21 @@ function! <SID>bufferlist_toggle(internal)
   endif
 
   " if we get called and the list is open --> close it
-  if bufexists(bufnr("__BUFFERLIST__"))
-    let buflistnr = bufnr("__BUFFERLIST__")
-    let buflistwindow = bufwinnr(buflistnr)
-    call <SID>kill(buflistnr)
-    " if the list wasn't open, just the buffer existed, proceed with opening
-    if buflistwindow != -1
+  let buflistnr = bufnr("__BUFFERLIST__")
+  if bufexists(buflistnr)
+    if bufwinnr(buflistnr) != -1
+      call <SID>kill(buflistnr, 1)
       return
+    else
+      call <SID>kill(buflistnr, 0)
+      if !a:internal
+        let t:bufferlist_start_window = winnr()
+        let t:bufferlist_winrestcmd = winrestcmd()
+      endif
     endif
   elseif !a:internal
     let t:bufferlist_start_window = winnr()
+    let t:bufferlist_winrestcmd = winrestcmd()
   endif
 
   if g:bufferlist_stick_to_bottom
@@ -255,15 +260,22 @@ function! <SID>vertical()
   call <SID>move(activebufline)
 endfunction
 
-function! <SID>kill(buflistnr)
+function! <SID>kill(buflistnr, final)
   if a:buflistnr
     silent! exe ':' . a:buflistnr . 'bwipeout'
   else
     bwipeout
   end
 
-  if exists("t:bufferlist_start_window")
+  if a:final
     silent! exe t:bufferlist_start_window . "wincmd w"
+    if winrestcmd() != t:bufferlist_winrestcmd
+      silent! exe t:bufferlist_winrestcmd
+
+      if winrestcmd() != t:bufferlist_winrestcmd
+        wincmd =
+      endif
+    endif
   endif
 endfunction
 
@@ -284,6 +296,8 @@ function! <SID>set_up_buffer()
     au BufLeave <buffer> silent! exe "set timeoutlen=" . b:old_timeoutlen
   endif
 
+  au BufLeave <buffer> call <SID>kill(0, 1)
+
   " set up syntax highlighting
   if has("syntax")
     syn clear
@@ -298,7 +312,7 @@ function! <SID>set_up_buffer()
   noremap <silent> <buffer> v :call <SID>load_buffer("vs")<CR>
   noremap <silent> <buffer> s :call <SID>load_buffer("sp")<CR>
   noremap <silent> <buffer> t :call <SID>load_buffer("tabnew")<CR>
-  map <silent> <buffer> q :call <SID>kill(0)<CR>
+  map <silent> <buffer> q :call <SID>kill(0, 1)<CR>
   map <silent> <buffer> j :call <SID>move("down")<CR>
   map <silent> <buffer> k :call <SID>move("up")<CR>
   map <silent> <buffer> d :call <SID>delete_buffer()<CR>
@@ -427,7 +441,7 @@ function! <SID>load_buffer(...)
   " get the selected buffer
   let str = <SID>get_selected_buffer()
   " kill the buffer list
-  call <SID>kill(0)
+  call <SID>kill(0, 1)
 
   if !empty(a:000)
     exec ":" . a:1
@@ -458,7 +472,7 @@ function! <SID>delete_buffer()
       if <SID>get_selected_buffer() == str
         call <SID>move("up")
         if <SID>get_selected_buffer() == str
-          call <SID>kill(0)
+          call <SID>kill(0, 0)
         else
           call <SID>load_buffer_into_window(selected_buffer_window)
         endif
@@ -466,7 +480,7 @@ function! <SID>delete_buffer()
         call <SID>load_buffer_into_window(selected_buffer_window)
       endif
     else
-      call <SID>kill(0)
+      call <SID>kill(0, 0)
     endif
     exec ":bdelete " . str
     call <SID>bufferlist_toggle(1)
@@ -490,7 +504,7 @@ function! <SID>delete_hidden_buffers()
       let visible[b] = 1
     endfor
   endfor
-  call <SID>kill(0)
+  call <SID>kill(0, 0)
   call <SID>keep_buffers_for_keys(visible)
   call <SID>bufferlist_toggle(1)
 endfunction
@@ -501,7 +515,7 @@ function! <SID>delete_foreign_buffers()
   for t in range(1, tabpagenr('$'))
     silent! call extend(friends, gettabvar(t, 'bufferlist_tab_friends'))
   endfor
-  call <SID>kill(0)
+  call <SID>kill(0, 0)
   call <SID>keep_buffers_for_keys(friends)
   call <SID>bufferlist_toggle(1)
 endfunction
@@ -536,7 +550,7 @@ endfunction
 
 function! <SID>toggle_tab_friends()
   let s:tabfriendstoggle = !s:tabfriendstoggle
-  call <SID>kill(0)
+  call <SID>kill(0, 0)
   call <SID>bufferlist_toggle(1)
 endfunction
 
@@ -554,7 +568,7 @@ function! <SID>detach_tab_friend()
       endif
       call <SID>load_buffer_into_window(selected_buffer_window)
     else
-      call <SID>kill(0)
+      call <SID>kill(0, 0)
     endif
     call remove(t:bufferlist_tab_friends, str)
     call <SID>bufferlist_toggle(1)
