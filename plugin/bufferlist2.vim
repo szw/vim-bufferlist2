@@ -1,6 +1,6 @@
 " vim-bufferlist2 - The Ultimate Buffer List
 " Maintainer:   Szymon Wrozynski
-" Version:      2.0.5
+" Version:      2.0.6
 "
 " Installation:
 " Place in ~/.vim/plugin/bufferlist2.vim or in case of Pathogen:
@@ -268,8 +268,11 @@ function! <SID>kill(buflistnr, final)
   end
 
   if a:final
-    silent! exe t:bufferlist_start_window . "wincmd w"
-    if winrestcmd() != t:bufferlist_winrestcmd
+    if exists("t:bufferlist_start_window")
+      silent! exe t:bufferlist_start_window . "wincmd w"
+    endif
+
+    if exists("t:bufferlist_winrestcmd") && (winrestcmd() != t:bufferlist_winrestcmd)
       silent! exe t:bufferlist_winrestcmd
 
       if winrestcmd() != t:bufferlist_winrestcmd
@@ -296,7 +299,10 @@ function! <SID>set_up_buffer()
     au BufLeave <buffer> silent! exe "set timeoutlen=" . b:old_timeoutlen
   endif
 
-  au BufLeave <buffer> call <SID>kill(0, 1)
+  augroup BufferListLeave
+    au!
+    au BufLeave <buffer> call <SID>kill(0, 1)
+  augroup END
 
   " set up syntax highlighting
   if has("syntax")
@@ -345,7 +351,7 @@ function! <SID>set_up_buffer()
   endif
 endfunction
 
-function! <SID>display_list(displayedbufs, buflist, width)
+function! <SID>make_filler(width)
   " generate a variable to fill the buffer afterwards
   " (we need this for "full window" color :)
   let fill = "\n"
@@ -353,6 +359,10 @@ function! <SID>display_list(displayedbufs, buflist, width)
     let fill = ' ' . fill
   endwhile
 
+  return fill
+endfunction
+
+function! <SID>display_list(displayedbufs, buflist, width)
   setlocal modifiable
   if a:displayedbufs > 0
     " input the buffer list, delete the trailing newline, & fill with blank lines
@@ -360,14 +370,81 @@ function! <SID>display_list(displayedbufs, buflist, width)
     " is there any way to NOT delete into a register? bummer...
     "normal! Gdd$
     normal! GkJ
+    let fill = <SID>make_filler(a:width)
     while winheight(0) > line(".")
       silent! put =fill
     endwhile
   else
-    let i = 0 | while i < winheight(0) | let i += 1
-      silent! put! =fill
+    let empty_list_message = "  List empty"
+    let width = a:width
+
+    if width < (strlen(empty_list_message) + 2)
+      if strlen(empty_list_message) + 2 < g:bufferlist_max_width
+        let width = strlen(empty_list_message) + 2
+      else
+        let width = g:bufferlist_max_width
+        let empty_list_message = strpart(empty_list_message, 0, width - 3) . "…"
+      endif
+      silent! exe "vert resize " . width
+    endif
+
+    while strlen(empty_list_message) < width
+      let empty_list_message .= ' '
     endwhile
+
+    silent! put! =empty_list_message
+    normal! GkJ
+
+    let fill = <SID>make_filler(width)
+
+    while winheight(0) > line(".")
+      silent! put =fill
+    endwhile
+
     normal! 0
+
+    " handle vim segfault on calling bd/bw if there are no buffers listed
+    let any_buffer_listed = 0
+    for i in range(1, bufnr("$"))
+      if buflisted(i)
+        let any_buffer_listed = 1
+        break
+      endif
+    endfor
+
+    if !any_buffer_listed
+      au! BufferListLeave BufLeave
+      noremap <silent> <buffer> q :q<CR>
+      if g:bufferlist_show_tab_friends
+        noremap <silent> <buffer> a <Nop>
+      endif
+      if g:bufferlist_set_default_mapping
+        silent! exe 'noremap <silent><buffer>' . g:bufferlist_default_mapping_key . ' :q<CR>'
+      endif
+    endif
+
+    noremap <silent> <buffer> <CR> <Nop>
+    noremap <silent> <buffer> v <Nop>
+    noremap <silent> <buffer> s <Nop>
+    noremap <silent> <buffer> t <Nop>
+    noremap <silent> <buffer> j <Nop>
+    noremap <silent> <buffer> k <Nop>
+    noremap <silent> <buffer> d <Nop>
+    noremap <silent> <buffer> D <Nop>
+    noremap <silent> <buffer> <MouseDown> <Nop>
+    noremap <silent> <buffer> <MouseUp> <Nop>
+    noremap <silent> <buffer> <LeftDrag> <Nop>
+    noremap <silent> <buffer> <LeftRelease> <Nop>
+    noremap <silent> <buffer> <2-LeftMouse> <Nop>
+    noremap <silent> <buffer> <Down> <Nop>
+    noremap <silent> <buffer> <Up> <Nop>
+    map <silent> <buffer> <Home> <Nop>
+    map <silent> <buffer> <End> <Nop>
+
+    if g:bufferlist_show_tab_friends
+      map <silent> <buffer> f :call <Nop>
+      map <silent> <buffer> F :call <Nop>
+    endif
   endif
   setlocal nomodifiable
 endfunction
