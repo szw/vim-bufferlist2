@@ -39,6 +39,9 @@ To delete all hidden buffers (the ones not visible in any tab) press `D` (upperc
 If you want to toggle between all buffers view and those related with the current tab only, press
 `a`.
 
+You can also jump between previous and next opened buffers with help of `p` (*previous*) and `n`
+(*next*) keys.
+
 *Related* means buffers seen in that tab at least once. This feature, called internally *tab
 friends*, can be turned off by setting `g:bufferlist_show_tab_friends = 0`. To see all buffers by
 default switch `g:bufferlist_show_tab_friends = 1`. If you set `g:bufferlist_show_tab_friends = 2`
@@ -73,6 +76,14 @@ useful to clean up "orphaned" buffers, if you just have closed the tab you were 
 <tr>
 <td><code>v</code></td>
 <td>Opens the selected buffer in a new vertical split</td>
+</tr>
+<tr>
+<td><code>p</code></td>
+<td>Jump to <em>previous</em> opened buffer</td>
+</tr>
+<tr>
+<td><code>n</code></td>
+<td>Jump to <em>next</em> opened buffer</td>
 </tr>
 <tr>
 <td><code>d</code></td>
@@ -122,6 +133,7 @@ in your `.vimrc`. Here are all possible options of BufferList:
     let g:bufferlist_cyclic_list = 0
     let g:bufferlist_set_default_mapping = 0
     let g:bufferlist_default_mapping_key = '<F3>'
+    let g:bufferlist_max_jumps = 200
     hi BufferSelected term=reverse ctermfg=white ctermbg=red cterm=bold
     hi BufferNormal term=NONE ctermfg=black ctermbg=darkcyan cterm=NONE
 

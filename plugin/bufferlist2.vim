@@ -1,6 +1,6 @@
 " vim-bufferlist2 - The Ultimate Buffer List
 " Maintainer:   Szymon Wrozynski
-" Version:      2.0.6
+" Version:      2.0.7
 "
 " Installation:
 " Place in ~/.vim/plugin/bufferlist2.vim or in case of Pathogen:
@@ -63,6 +63,10 @@ if !exists('g:bufferlist_cyclic_list')
   let g:bufferlist_cyclic_list = 1
 endif
 
+if !exists('g:bufferlist_max_jumps')
+  let g:bufferlist_max_jumps = 100
+endif
+
 command! -nargs=0 -range BufferList :call <SID>bufferlist_toggle(0)
 
 if g:bufferlist_set_default_mapping
@@ -74,6 +78,9 @@ endif
 if g:bufferlist_show_tab_friends
   au BufEnter * call <SID>add_tab_friend()
 endif
+
+let s:bufferlist_jumps = []
+au BufEnter * call <SID>add_jump()
 
 " toggled the buffer list on/off
 function! <SID>bufferlist_toggle(internal)
@@ -104,6 +111,30 @@ function! <SID>bufferlist_toggle(internal)
   else
     call <SID>vertical()
   endif
+endfunction
+
+function! <SID>create_jumplines(bufnumbers, activebufline)
+  let jumplines = []
+  let buffers = []
+  for bufnr in split(a:bufnumbers, ":")
+    call add(buffers, str2nr(bufnr))
+  endfor
+
+  for jumpbuf in s:bufferlist_jumps
+    let jumpline = index(buffers, jumpbuf)
+    " if (jumpline >= 0) && (index(jumplines, jumpline + 1) == -1)
+    if (jumpline >= 0) && (index(jumplines, jumpline + 1) != (len(jumpline) - 1))
+      call add(jumplines, jumpline + 1)
+    endif
+  endfor
+
+  if jumplines[-1] != a:activebufline
+    call add(jumplines, a:activebufline)
+  endif
+
+  call reverse(jumplines)
+
+  return jumplines
 endfunction
 
 function! <SID>horizontal()
@@ -181,6 +212,7 @@ function! <SID>horizontal()
   " for our other functions
   let b:bufnumbers = bufnumbers
   let b:bufcount = displayedbufs
+  let b:jumplines = <SID>create_jumplines(bufnumbers, activebufline)
 
   " go to the correct line
   call <SID>move(activebufline)
@@ -255,6 +287,7 @@ function! <SID>vertical()
   " for our other functions
   let b:bufnumbers = bufnumbers
   let b:bufcount = displayedbufs
+  let b:jumplines = <SID>create_jumplines(bufnumbers, activebufline)
 
   " go to the correct line
   call <SID>move(activebufline)
@@ -321,6 +354,8 @@ function! <SID>set_up_buffer()
   map <silent> <buffer> q :call <SID>kill(0, 1)<CR>
   map <silent> <buffer> j :call <SID>move("down")<CR>
   map <silent> <buffer> k :call <SID>move("up")<CR>
+  map <silent> <buffer> p :call <SID>jump("previous")<CR>
+  map <silent> <buffer> n :call <SID>jump("next")<CR>
   map <silent> <buffer> d :call <SID>delete_buffer()<CR>
   map <silent> <buffer> D :call <SID>delete_hidden_buffers()<CR>
   map <silent> <buffer> <MouseDown> :call <SID>move("up")<CR>
@@ -431,6 +466,8 @@ function! <SID>display_list(displayedbufs, buflist, width)
     noremap <silent> <buffer> k <Nop>
     noremap <silent> <buffer> d <Nop>
     noremap <silent> <buffer> D <Nop>
+    noremap <silent> <buffer> p <Nop>
+    noremap <silent> <buffer> n <Nop>
     noremap <silent> <buffer> <MouseDown> <Nop>
     noremap <silent> <buffer> <MouseUp> <Nop>
     noremap <silent> <buffer> <LeftDrag> <Nop>
@@ -511,6 +548,28 @@ function! <SID>goto(line)
   else
     call cursor(a:line, 1)
   endif
+endfunction
+
+function! <SID>jump(direction)
+  if !exists("b:jumppos")
+    let b:jumppos = 0
+  endif
+
+  if a:direction == "previous"
+    let b:jumppos += 1
+
+    if b:jumppos == len(b:jumplines)
+      let b:jumppos = len(b:jumplines) - 1
+    endif
+  elseif a:direction == "next"
+    let b:jumppos -= 1
+
+    if b:jumppos < 0
+      let b:jumppos = 0
+    endif
+  endif
+
+  call <SID>move(string(b:jumplines[b:jumppos]))
 endfunction
 
 " loads the selected buffer
@@ -622,6 +681,17 @@ function! <SID>add_tab_friend()
 
   if getbufvar(current, '&modifiable') && getbufvar(current, '&buflisted') && current != bufnr("__BUFFERLIST__")
     let t:bufferlist_tab_friends[current] = 1
+  endif
+endfunction
+
+function! <SID>add_jump()
+  let current = bufnr('%')
+
+  if getbufvar(current, '&modifiable') && getbufvar(current, '&buflisted') && current != bufnr("__BUFFERLIST__")
+    call add(s:bufferlist_jumps, current)
+    if len(s:bufferlist_jumps) > g:bufferlist_max_jumps + 1
+      unlet s:bufferlist_jumps[0]
+    endif
   endif
 endfunction
 
