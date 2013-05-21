@@ -40,7 +40,7 @@ If you want to toggle between all buffers view and those related with the curren
 `a`.
 
 You can also jump between previous and next opened buffers with help of `p` (*previous*) and `n`
-(*next*) keys.
+(*next*) keys (note, currently displayed buffers does not count).
 
 *Related* means buffers seen in that tab at least once. This feature, called internally *tab
 friends*, can be turned off by setting `g:bufferlist_show_tab_friends = 0`. To see all buffers by

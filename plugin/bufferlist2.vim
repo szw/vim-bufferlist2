@@ -121,14 +121,16 @@ function! <SID>create_jumplines(bufnumbers, activebufline)
   endfor
 
   for jumpbuf in s:bufferlist_jumps
-    let jumpline = index(buffers, jumpbuf)
-    " if (jumpline >= 0) && (index(jumplines, jumpline + 1) == -1)
-    if (jumpline >= 0) && (index(jumplines, jumpline + 1) != (len(jumpline) - 1))
-      call add(jumplines, jumpline + 1)
+    if bufwinnr(jumpbuf) == -1
+      let jumpline = index(buffers, jumpbuf)
+      " if (jumpline >= 0) && (index(jumplines, jumpline + 1) == -1)
+      if (jumpline >= 0) && (index(jumplines, jumpline + 1) != (len(jumpline) - 1))
+        call add(jumplines, jumpline + 1)
+      endif
     endif
   endfor
 
-  if jumplines[-1] != a:activebufline
+  if empty(jumplines) || (jumplines[-1] != a:activebufline)
     call add(jumplines, a:activebufline)
   endif
 
