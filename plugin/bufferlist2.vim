@@ -138,9 +138,11 @@ function! <SID>create_jumplines(bufnumbers, activebufline)
 
   call add(jumplines, a:activebufline)
 
-  let unique_list = filter(copy(jumplines), 'index(jumplines, v:val, v:key + 1) == -1')
-  call reverse(unique_list)
-  return unique_list
+  return reverse(<SID>unique_list(jumplines))
+endfunction
+
+function! <SID>unique_list(list)
+  return filter(copy(a:list), 'index(a:list, v:val, v:key + 1) == -1')
 endfunction
 
 function! <SID>horizontal()
@@ -699,6 +701,7 @@ function! <SID>add_jump()
 
   if getbufvar(current, '&modifiable') && getbufvar(current, '&buflisted') && current != bufnr("__BUFFERLIST__")
     call add(s:bufferlist_jumps, current)
+    let s:bufferlist_jumps = <SID>unique_list(s:bufferlist_jumps)
 
     if len(s:bufferlist_jumps) > g:bufferlist_max_jumps + 1
       unlet s:bufferlist_jumps[0]
@@ -706,6 +709,7 @@ function! <SID>add_jump()
 
     if g:bufferlist_show_tab_friends
       call add(t:bufferlist_jumps, current)
+      let t:bufferlist_jumps = <SID>unique_list(t:bufferlist_jumps)
 
       if len(t:bufferlist_jumps) > g:bufferlist_max_jumps + 1
         unlet t:bufferlist_jumps[0]
