@@ -138,17 +138,9 @@ function! <SID>create_jumplines(bufnumbers, activebufline)
 
   call add(jumplines, a:activebufline)
 
-  let squeezed_reversed_jumplines = []
-
-  for line in jumplines
-    if !empty(squeezed_reversed_jumplines) && (squeezed_reversed_jumplines[0] == line)
-      continue
-    else
-      call insert(squeezed_reversed_jumplines, line)
-    endif
-  endfor
-
-  return squeezed_reversed_jumplines
+  let unique_list = filter(copy(jumplines), 'index(jumplines, v:val, v:key + 1) == -1')
+  call reverse(unique_list)
+  return unique_list
 endfunction
 
 function! <SID>horizontal()
