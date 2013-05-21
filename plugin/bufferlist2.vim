@@ -114,29 +114,43 @@ function! <SID>bufferlist_toggle(internal)
 endfunction
 
 function! <SID>create_jumplines(bufnumbers, activebufline)
-  let jumplines = []
   let buffers = []
   for bufnr in split(a:bufnumbers, ":")
     call add(buffers, str2nr(bufnr))
   endfor
 
-  for jumpbuf in s:bufferlist_jumps
+  if s:tabfriendstoggle && exists("t:bufferlist_jumps")
+    let bufferjumps = t:bufferlist_jumps
+  else
+    let bufferjumps = s:bufferlist_jumps
+  endif
+
+  let jumplines = []
+
+  for jumpbuf in bufferjumps
     if bufwinnr(jumpbuf) == -1
       let jumpline = index(buffers, jumpbuf)
-      " if (jumpline >= 0) && (index(jumplines, jumpline + 1) == -1)
-      if (jumpline >= 0) && (index(jumplines, jumpline + 1) != (len(jumpline) - 1))
+      if (jumpline >= 0)
         call add(jumplines, jumpline + 1)
       endif
     endif
   endfor
 
-  if empty(jumplines) || (jumplines[-1] != a:activebufline)
-    call add(jumplines, a:activebufline)
-  endif
+  call add(jumplines, a:activebufline)
 
-  call reverse(jumplines)
+  let squeezed_jumplines = []
 
-  return jumplines
+  for line in jumplines
+    if !empty(squeezed_jumplines) && (squeezed_jumplines[-1] == line)
+      continue
+    else
+      call add(squeezed_jumplines, line)
+    endif
+  endfor
+
+  call reverse(squeezed_jumplines)
+
+  return squeezed_jumplines
 endfunction
 
 function! <SID>horizontal()
@@ -687,12 +701,25 @@ function! <SID>add_tab_friend()
 endfunction
 
 function! <SID>add_jump()
+  if g:bufferlist_show_tab_friends && !exists("t:bufferlist_jumps")
+    let t:bufferlist_jumps = []
+  endif
+
   let current = bufnr('%')
 
   if getbufvar(current, '&modifiable') && getbufvar(current, '&buflisted') && current != bufnr("__BUFFERLIST__")
     call add(s:bufferlist_jumps, current)
+
     if len(s:bufferlist_jumps) > g:bufferlist_max_jumps + 1
       unlet s:bufferlist_jumps[0]
+    endif
+
+    if g:bufferlist_show_tab_friends
+      call add(t:bufferlist_jumps, current)
+
+      if len(t:bufferlist_jumps) > g:bufferlist_max_jumps + 1
+        unlet t:bufferlist_jumps[0]
+      endif
     endif
   endif
 endfunction
