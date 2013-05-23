@@ -363,6 +363,7 @@ function! <SID>set_up_buffer()
   map <silent> <buffer> j :call <SID>move("down")<CR>
   map <silent> <buffer> k :call <SID>move("up")<CR>
   map <silent> <buffer> p :call <SID>jump("previous")<CR>
+  map <silent> <buffer> P :call <SID>jump("previous")<CR>:call <SID>load_buffer()<CR>
   map <silent> <buffer> n :call <SID>jump("next")<CR>
   map <silent> <buffer> d :call <SID>delete_buffer()<CR>
   map <silent> <buffer> D :call <SID>delete_hidden_buffers()<CR>
@@ -475,6 +476,7 @@ function! <SID>display_list(displayedbufs, buflist, width)
     noremap <silent> <buffer> d <Nop>
     noremap <silent> <buffer> D <Nop>
     noremap <silent> <buffer> p <Nop>
+    noremap <silent> <buffer> P <Nop>
     noremap <silent> <buffer> n <Nop>
     noremap <silent> <buffer> <MouseDown> <Nop>
     noremap <silent> <buffer> <MouseUp> <Nop>

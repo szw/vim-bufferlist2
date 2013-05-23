@@ -40,7 +40,8 @@ If you want to toggle between all buffers view and those related with the curren
 `a`.
 
 You can also jump between previous and next opened buffers with help of `p` (like _previous_) and `n`
-(like _next_) keys (note, currently displayed buffers does not count).
+(like _next_) keys (note, currently displayed buffers does not count). There is even a shortcut
+to open the previous buffer immediately: uppercase `P`.
 
 *Related* means buffers seen in that tab at least once. This feature, called internally *tab
 friends*, can be turned off by setting `g:bufferlist_show_tab_friends = 0`. To see all buffers by
@@ -80,6 +81,10 @@ useful to clean up "orphaned" buffers, if you just have closed the tab you were 
 <tr>
 <td><code>p</code></td>
 <td>Jump to <em>previous</em> opened buffer</td>
+</tr>
+<tr>
+<td><code>P</code></td>
+<td>Jump to <em>previous</em> opened buffer and open it immediately</td>
 </tr>
 <tr>
 <td><code>n</code></td>
