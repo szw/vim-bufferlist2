@@ -28,7 +28,7 @@ if !exists('g:bufferlist_width')
 endif
 
 if !exists('g:bufferlist_max_width')
-  let g:bufferlist_max_width = 40
+  let g:bufferlist_max_width = 50
 endif
 
 if !exists('g:bufferlist_height')
@@ -36,7 +36,7 @@ if !exists('g:bufferlist_height')
 endif
 
 if !exists('g:bufferlist_max_height')
-  let g:bufferlist_max_height = 10
+  let g:bufferlist_max_height = 15
 endif
 
 if !exists('g:bufferlist_show_unnamed')
@@ -48,7 +48,7 @@ if !exists('g:bufferlist_show_tab_friends')
 endif
 
 if !exists('g:bufferlist_stick_to_bottom')
-  let g:bufferlist_stick_to_bottom = 0
+  let g:bufferlist_stick_to_bottom = 1
 endif
 
 if !exists('g:bufferlist_set_default_mapping')

@@ -16,7 +16,7 @@ how many users it has and then how to proceed with further development :).
 About
 -----
 
-Upon keypress this script display a nice list of buffers on the left (or at the bottom),
+Upon keypress this script display a nice list of buffers at the bottom (or on the left),
 which can be selected with mouse or keyboard. As soon as a buffer is selected
 (`Return` (or `s`, `v`, `t`), double click) the list disappears.
 
@@ -28,22 +28,18 @@ Buffers that are visible (in any window) are marked with `*`, ones that are modi
 
 You can adjust the displaying of unnamed buffers. If you set `g:bufferlist_show_unnamed = 1` then
 unnamed buffers will be shown on the list any time. However, if you set this value to `2` (default),
-unnamed buffers will be displayed only if they are modified or just visible on the screen.
+unnamed buffers will be displayed only if they are modified or just visible on the screen. Of course
+you can hide unnamed buffers permanently by `g:bufferlist_show_unnamed = 0`.
 
-Of course you can hide unnamed buffers permanently by `g:bufferlist_show_unnamed = 0`.
+To delete a buffer from the list (i.e. close the file) press `d`. To delete all hidden buffers (the
+ones not visible in any tab) press `D` (uppercase).
 
-To delete a buffer from the list (i.e. close the file) press `d`.
-
-To delete all hidden buffers (the ones not visible in any tab) press `D` (uppercase).
-
-If you want to toggle between all buffers view and those related with the current tab only, press
-`a`.
-
-You can also jump between previous and next opened buffers with help of `p` (like _previous_) and `n`
-(like _next_) keys (note, currently displayed buffers does not count). There is even a shortcut
+You can also jump between previous and next opened buffers with help of `p` (like *previous*) and `n`
+(like *next*) keys (note, currently displayed buffers does not count). There is even a shortcut
 to open the previous buffer immediately: uppercase `P`.
 
-*Related* means buffers seen in that tab at least once. This feature, called internally *tab
+If you want to toggle between all buffers view and those related with the current tab only, press
+`a`. *Related* means buffers seen in that tab at least once. This feature, called internally *tab
 friends*, can be turned off by setting `g:bufferlist_show_tab_friends = 0`. To see all buffers by
 default switch `g:bufferlist_show_tab_friends = 1`. If you set `g:bufferlist_show_tab_friends = 2`
 (default) tab friends are turned on and visible by default. Of course, the `a` key can toggle the
@@ -53,7 +49,7 @@ You can also detach a tab friend buffer from the current tab. We would say to ma
 ;). To perform that press `f` (a good mnemonic could be *forget*)
 
 You can also close all detached (foreign) buffers, if you press uppercase letter `F`. This can be
-useful to clean up "orphaned" buffers, if you just have closed the tab you were working with.
+useful to clean up *orphaned* buffers, if you just have closed the tab you were working with.
 
 ### Keys summary ###
 
@@ -148,4 +144,4 @@ License
 Copyright(c) 2005, Robert Lillack <rob@burningsoda.com> - original plugin code<br />
 Copyright(c) 2013, Szymon Wrozynski <szymon@wrozynski.com> - further development
 
-Redistribution in any form with or without modification permitted.
+Licensed under the MIT License conditions.
