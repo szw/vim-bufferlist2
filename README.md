@@ -116,7 +116,7 @@ Use it freely whenever your *all buffers* list view seems messy to you.
 Usage
 -----
 
-Put `next_bufferlist.vim` file into your `~/.vim/plugin` directory. To open NextBufferList there is a command:
+Put `next-bufferlist.vim` file into your `~/.vim/plugin` directory. To open NextBufferList there is a command:
 
     :NextBufferList
 
