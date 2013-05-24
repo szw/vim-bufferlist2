@@ -1,6 +1,6 @@
 " vim-bufferlist2 - The Ultimate Buffer List
 " Maintainer:   Szymon Wrozynski
-" Version:      2.0.7
+" Version:      2.0.8
 "
 " Installation:
 " Place in ~/.vim/plugin/bufferlist2.vim or in case of Pathogen:
@@ -44,7 +44,7 @@ if !exists('g:bufferlist_show_unnamed')
 endif
 
 if !exists('g:bufferlist_show_tab_friends')
-  let g:bufferlist_show_tab_friends = 2
+  let g:bufferlist_show_tab_friends = 1
 endif
 
 if !exists('g:bufferlist_stick_to_bottom')
@@ -85,7 +85,7 @@ au BufEnter * call <SID>add_jump()
 " toggled the buffer list on/off
 function! <SID>bufferlist_toggle(internal)
   if !a:internal
-    let s:tabfriendstoggle = (g:bufferlist_show_tab_friends == 2)
+    let s:tabfriendstoggle = g:bufferlist_show_tab_friends
   endif
 
   " if we get called and the list is open --> close it
@@ -371,8 +371,7 @@ function! <SID>set_up_buffer()
   map <silent> <buffer> <MouseUp> :call <SID>move("down")<CR>
   map <silent> <buffer> <LeftDrag> <Nop>
   map <silent> <buffer> <LeftRelease> :call <SID>move("mouse")<CR>
-  map <silent> <buffer> <2-LeftMouse> :call <SID>move("mouse")<CR>
-    \:call <SID>load_buffer()<CR>
+  map <silent> <buffer> <2-LeftMouse> :call <SID>move("mouse")<CR>:call <SID>load_buffer()<CR>
   map <silent> <buffer> <Down> j
   map <silent> <buffer> <Up> k
   map <buffer> h <Nop>

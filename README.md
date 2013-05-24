@@ -40,16 +40,17 @@ to open the previous buffer immediately: uppercase `P`.
 
 If you want to toggle between all buffers view and those related with the current tab only, press
 `a`. *Related* means buffers seen in that tab at least once. This feature, called internally *tab
-friends*, can be turned off by setting `g:bufferlist_show_tab_friends = 0`. To see all buffers by
-default switch `g:bufferlist_show_tab_friends = 1`. If you set `g:bufferlist_show_tab_friends = 2`
-(default) tab friends are turned on and visible by default. Of course, the `a` key can toggle the
-view all the time.
+friends* is turned on by default and can be turned off by setting `g:bufferlist_show_tab_friends = 0`.
 
-You can also detach a tab friend buffer from the current tab. We would say to make it a foreign one
-;). To perform that press `f` (a good mnemonic could be *forget*)
+If you use *tab friends* feature you are also allowed to detach a *friend* buffer from the current
+tab. We would say to make it a *foreign* one ;). To perform that press `f` (a good mnemonic could
+be also to *forget*). It is also safer than deleting a buffer especially if you are unsure whether
+you need this buffer in another tab.
 
-You can also close all detached (foreign) buffers, if you press uppercase letter `F`. This can be
+To close all detached (foreign) buffers, press uppercase letter `F`. This is particularly
 useful to clean up *orphaned* buffers, if you just have closed the tab you were working with.
+Use it freely whenever your *all buffers* list view seems messy to you.
+
 
 ### Keys summary ###
 
