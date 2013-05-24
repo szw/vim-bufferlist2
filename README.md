@@ -1,11 +1,11 @@
-Vim BufferList2
-===============
+VIM NextBufferList
+==================
 
 Welcome
 -------
 
 This project is based on original Robert Lillack's great
-[Vim BufferList](https://github.com/roblillack/vim-bufferlist) plugin. However, instead of forking
+[VIM bufferlist](https://github.com/roblillack/vim-bufferlist) plugin. However, instead of forking
 Rob's project I decided to create a new project based exactly on his original one. Partially because
 his project seems a bit abandoned, and also, the changes I've introduced into the code are radical
 and might be hard for future merging.
@@ -26,10 +26,10 @@ The selection can be cancelled with the same key that is configured to open the 
 Buffers that are visible (in any window) are marked with `*`, ones that are modified are marked with
 `+`.
 
-You can adjust the displaying of unnamed buffers. If you set `g:bufferlist_show_unnamed = 1` then
+You can adjust the displaying of unnamed buffers. If you set `g:next_bufferlist_show_unnamed = 1` then
 unnamed buffers will be shown on the list any time. However, if you set this value to `2` (default),
 unnamed buffers will be displayed only if they are modified or just visible on the screen. Of course
-you can hide unnamed buffers permanently by `g:bufferlist_show_unnamed = 0`.
+you can hide unnamed buffers permanently by `g:next_bufferlist_show_unnamed = 0`.
 
 To delete a buffer from the list (i.e. close the file) press `d`. To delete all hidden buffers (the
 ones not visible in any tab) press `D` (uppercase).
@@ -40,7 +40,7 @@ to open the previous buffer immediately: uppercase `P`.
 
 If you want to toggle between all buffers view and those related with the current tab only, press
 `a`. *Related* means buffers seen in that tab at least once. This feature, called internally *tab
-friends* is turned on by default and can be turned off by setting `g:bufferlist_show_tab_friends = 0`.
+friends* is turned on by default and can be turned off by setting `g:next_bufferlist_show_tab_friends = 0`.
 
 If you use *tab friends* feature you are also allowed to detach a *friend* buffer from the current
 tab. We would say to make it a *foreign* one ;). To perform that press `f` (a good mnemonic could
@@ -116,26 +116,26 @@ Use it freely whenever your *all buffers* list view seems messy to you.
 Usage
 -----
 
-Put bufferlist.vim file into your `~/.vim/plugin` directory. To open BufferList there is a command:
+Put `next_bufferlist.vim` file into your `~/.vim/plugin` directory. To open NextBufferList there is a command:
 
-    :BufferList
+    :NextBufferList
 
 By default it is mapped to `<F2>`. You can change it or even disable default mappings
-in your `.vimrc`. Here are all possible options of BufferList:
+in your `.vimrc`. Here are all possible options of NextBufferList:
 
 ### Possible options examples ###
 
-    let g:bufferlist_show_unnamed = 1
-    let g:bufferlist_show_tab_friends = 1
-    let g:bufferlist_width = 25
-    let g:bufferlist_max_width = 50
-    let g:bufferlist_height = 5
-    let g:bufferlist_max_height = 15
-    let g:bufferlist_stick_to_bottom = 1
-    let g:bufferlist_cyclic_list = 0
-    let g:bufferlist_set_default_mapping = 0
-    let g:bufferlist_default_mapping_key = '<F3>'
-    let g:bufferlist_max_jumps = 200
+    let g:next_bufferlist_show_unnamed = 1
+    let g:next_bufferlist_show_tab_friends = 1
+    let g:next_bufferlist_width = 25
+    let g:next_bufferlist_max_width = 50
+    let g:next_bufferlist_height = 5
+    let g:next_bufferlist_max_height = 15
+    let g:next_bufferlist_stick_to_bottom = 1
+    let g:next_bufferlist_cyclic_list = 0
+    let g:next_bufferlist_set_default_mapping = 0
+    let g:next_bufferlist_default_mapping_key = '<F3>'
+    let g:next_bufferlist_max_jumps = 200
     hi BufferSelected term=reverse ctermfg=white ctermbg=red cterm=bold
     hi BufferNormal term=NONE ctermfg=black ctermbg=darkcyan cterm=NONE
 
