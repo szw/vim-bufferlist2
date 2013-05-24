@@ -1,4 +1,4 @@
-VIM NextBufferList
+Vim NextBufferList
 ==================
 
 Welcome

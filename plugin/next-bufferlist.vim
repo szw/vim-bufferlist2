@@ -1,4 +1,4 @@
-" VIM NextBufferList - The Ultimate Buffer List
+" Vim NextBufferList - The Ultimate Buffer List
 " Maintainer:   Szymon Wrozynski
 " Version:      2.0.8
 "
