@@ -86,8 +86,6 @@ if g:next_bufferlist_show_tab_friends
   au BufEnter * call <SID>add_tab_friend()
 endif
 
-let s:sort_order = g:next_bufferlist_default_sort_order
-
 let s:next_bufferlist_jumps = []
 au BufEnter * call <SID>add_jump()
 
@@ -95,6 +93,7 @@ au BufEnter * call <SID>add_jump()
 function! <SID>next_bufferlist_toggle(internal)
   if !a:internal
     let s:tabfriendstoggle = g:next_bufferlist_show_tab_friends
+    let s:sort_order = g:next_bufferlist_default_sort_order
   endif
 
   " if we get called and the list is open --> close it
