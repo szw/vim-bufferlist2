@@ -1,6 +1,6 @@
 " Vim NextBufferList - The Ultimate Buffer List
 " Maintainer:   Szymon Wrozynski
-" Version:      2.0.8
+" Version:      2.0.9
 "
 " Installation:
 " Place in ~/.vim/plugin/next-bufferlist.vim or in case of Pathogen:
@@ -67,6 +67,13 @@ if !exists('g:next_bufferlist_max_jumps')
   let g:next_bufferlist_max_jumps = 100
 endif
 
+" 0 - no sort
+" 1 - chronological
+" 2 - alphanumeric
+if !exists('g:next_bufferlist_default_sort_order')
+  let g:next_bufferlist_default_sort_order = 1
+endif
+
 command! -nargs=0 -range NextBufferList :call <SID>next_bufferlist_toggle(0)
 
 if g:next_bufferlist_set_default_mapping
@@ -78,6 +85,8 @@ endif
 if g:next_bufferlist_show_tab_friends
   au BufEnter * call <SID>add_tab_friend()
 endif
+
+let s:sort_order = g:next_bufferlist_default_sort_order
 
 let s:next_bufferlist_jumps = []
 au BufEnter * call <SID>add_jump()
@@ -113,10 +122,10 @@ function! <SID>next_bufferlist_toggle(internal)
   endif
 endfunction
 
-function! <SID>create_jumplines(bufnumbers, activebufline)
+function! <SID>create_jumplines(buflist, activebufline)
   let buffers = []
-  for bufnr in split(a:bufnumbers, ":")
-    call add(buffers, str2nr(bufnr))
+  for bufentry in a:buflist
+    call add(buffers, bufentry.number)
   endfor
 
   if s:tabfriendstoggle && exists("t:next_bufferlist_jumps")
@@ -145,13 +154,28 @@ function! <SID>unique_list(list)
   return filter(copy(a:list), 'index(a:list, v:val, v:key + 1) == -1')
 endfunction
 
+function! <SID>decorate_with_indicators(name, bufnum)
+  let indicators = ' '
+
+  if bufwinnr(a:bufnum) != -1
+    let indicators .= '*'
+  endif
+  if getbufvar(a:bufnum, '&modified')
+    let indicators .= '+'
+  endif
+
+  if len(indicators) > 1
+    return a:name . indicators
+  else
+    return a:name
+  endif
+endfunction
+
 function! <SID>horizontal()
   let bufcount = bufnr('$')
   let displayedbufs = 0
   let activebuf = bufnr('')
-  let activebufline = 0
-  let buflist = ''
-  let bufnumbers = ''
+  let buflist = []
 
   " create the buffer first & set it up
   exec 'silent! new __NEXT_BUFFERLIST__'
@@ -162,7 +186,8 @@ function! <SID>horizontal()
   let width = winwidth(0)
 
   " iterate through the buffers
-  let i = 0 | while i <= bufcount | let i += 1
+
+  for i in range(1, bufcount)
     if s:tabfriendstoggle && !exists('t:next_bufferlist_tab_friends[' . i . ']')
       continue
     endif
@@ -177,33 +202,23 @@ function! <SID>horizontal()
 
     if strlen(bufname) && getbufvar(i, '&modifiable') && getbufvar(i, '&buflisted')
       " adapt width and/or buffer name
-      if strlen(bufname) + 5 > width
-        let bufname = '…' . strpart(bufname, strlen(bufname) - width + 6)
+      if strlen(bufname) + 6 > width
+        let bufname = '…' . strpart(bufname, strlen(bufname) - width + 7)
       endif
 
-      if bufwinnr(i) != -1
-        let bufname .= '*'
-      endif
-      if getbufvar(i, '&modified')
-        let bufname .= '+'
-      endif
+      let bufname = <SID>decorate_with_indicators(bufname, i)
+
       " count displayed buffers
       let displayedbufs += 1
-      " remember buffer numbers
-      let bufnumbers .= i . ':'
-      " remember the buffer that was active BEFORE showing the list
-      if activebuf == i
-        let activebufline = displayedbufs
-      endif
       " fill the name with spaces --> gives a nice selection bar
       " use MAX width here, because the width may change inside of this 'for' loop
       while strlen(bufname) < width
         let bufname .= ' '
       endwhile
       " add the name to the list
-      let buflist .=  '  ' . bufname . "\n"
+      call add(buflist, { "text": '  ' . bufname . "\n", "number": i })
     endif
-  endwhile
+  endfor
 
   " set up window height
   if displayedbufs > g:next_bufferlist_height
@@ -216,15 +231,28 @@ function! <SID>horizontal()
 
   call <SID>display_list(displayedbufs, buflist, width)
 
+  let activebufline = <SID>find_activebufline(activebuf, buflist)
+
   " make the buffer count & the buffer numbers available
   " for our other functions
-  let b:bufnumbers = bufnumbers
+  let b:buflist = buflist
   let b:bufcount = displayedbufs
-  let b:jumplines = <SID>create_jumplines(bufnumbers, activebufline)
+  let b:jumplines = <SID>create_jumplines(buflist, activebufline)
 
   " go to the correct line
   call <SID>move(activebufline)
   normal! zb
+endfunction
+
+function! <SID>find_activebufline(activebuf, buflist)
+  let activebufline = 0
+  for bufentry in a:buflist
+    let activebufline += 1
+    if a:activebuf == bufentry.number
+      return activebufline
+    endif
+  endfor
+  return activebufline
 endfunction
 
 " toggled the buffer list on/off
@@ -232,13 +260,11 @@ function! <SID>vertical()
   let bufcount = bufnr('$')
   let displayedbufs = 0
   let activebuf = bufnr('')
-  let activebufline = 0
-  let buflist = ''
-  let bufnumbers = ''
+  let buflist = []
   let width = g:next_bufferlist_width
 
   " iterate through the buffers
-  let i = 0 | while i <= bufcount | let i += 1
+  for i in range(1, bufcount)
     if s:tabfriendstoggle && !exists('t:next_bufferlist_tab_friends[' . i . ']')
       continue
     endif
@@ -253,49 +279,40 @@ function! <SID>vertical()
 
     if strlen(bufname) && getbufvar(i, '&modifiable') && getbufvar(i, '&buflisted')
       " adapt width and/or buffer name
-      if width < (strlen(bufname) + 5)
-        if strlen(bufname) + 5 < g:next_bufferlist_max_width
-          let width = strlen(bufname) + 5
+      if width < (strlen(bufname) + 6)
+        if strlen(bufname) + 6 < g:next_bufferlist_max_width
+          let width = strlen(bufname) + 6
         else
           let width = g:next_bufferlist_max_width
-          let bufname = '…' . strpart(bufname, strlen(bufname) - g:next_bufferlist_max_width + 6)
+          let bufname = '…' . strpart(bufname, strlen(bufname) - g:next_bufferlist_max_width + 7)
         endif
       endif
 
-      if bufwinnr(i) != -1
-        let bufname .= '*'
-      endif
-      if getbufvar(i, '&modified')
-        let bufname .= '+'
-      endif
+      let bufname = <SID>decorate_with_indicators(bufname, i)
+
       " count displayed buffers
       let displayedbufs += 1
-      " remember buffer numbers
-      let bufnumbers .= i . ':'
-      " remember the buffer that was active BEFORE showing the list
-      if activebuf == i
-        let activebufline = displayedbufs
-      endif
       " fill the name with spaces --> gives a nice selection bar
       " use MAX width here, because the width may change inside of this 'for' loop
       while strlen(bufname) < g:next_bufferlist_max_width
         let bufname .= ' '
       endwhile
       " add the name to the list
-      let buflist .=  '  ' . bufname . "\n"
+      call add(buflist, { "text": '  ' . bufname . "\n", "number": i })
     endif
-  endwhile
+  endfor
 
   " now, create the buffer & set it up
   exec 'silent! ' . width . 'vne __NEXT_BUFFERLIST__'
   call <SID>set_up_buffer()
   call <SID>display_list(displayedbufs, buflist, width)
 
+  let activebufline = <SID>find_activebufline(activebuf, buflist)
   " make the buffer count & the buffer numbers available
   " for our other functions
-  let b:bufnumbers = bufnumbers
+  let b:buflist = buflist
   let b:bufcount = displayedbufs
-  let b:jumplines = <SID>create_jumplines(bufnumbers, activebufline)
+  let b:jumplines = <SID>create_jumplines(buflist, activebufline)
 
   " go to the correct line
   call <SID>move(activebufline)
@@ -333,10 +350,21 @@ function! <SID>set_up_buffer()
   setlocal nowrap
   setlocal nonumber
 
-  if s:tabfriendstoggle
-    let &l:statusline = "NEXT_BUFFERLIST [TAB]"
-  else
-    let &l:statusline = "NEXT_BUFFERLIST [ALL]"
+  if has('statusline')
+    let &l:statusline = "NEXT_BUFFERLIST"
+    if s:tabfriendstoggle
+      let &l:statusline .= " [TAB]"
+    else
+      let &l:statusline .= " [ALL]"
+    endif
+
+    if s:sort_order
+      if s:sort_order == 1
+        let &l:statusline .= " [123]"
+      elseif s:sort_order == 2
+        let &l:statusline .= " [ABC]"
+      endif
+    endif
   endif
 
   if &timeout
@@ -365,6 +393,7 @@ function! <SID>set_up_buffer()
   noremap <silent> <buffer> v :call <SID>load_buffer("vs")<CR>
   noremap <silent> <buffer> s :call <SID>load_buffer("sp")<CR>
   noremap <silent> <buffer> t :call <SID>load_buffer("tabnew")<CR>
+  map <silent> <buffer> o :call <SID>toggle_order()<CR>
   map <silent> <buffer> q :call <SID>kill(0, 1)<CR>
   map <silent> <buffer> j :call <SID>move("down")<CR>
   map <silent> <buffer> k :call <SID>move("up")<CR>
@@ -388,7 +417,6 @@ function! <SID>set_up_buffer()
   map <buffer> a <Nop>
   map <buffer> I <Nop>
   map <buffer> A <Nop>
-  map <buffer> o <Nop>
   map <buffer> O <Nop>
   map <silent> <buffer> <Home> :call <SID>move(1)<CR>
   map <silent> <buffer> <End> :call <SID>move(line("$"))<CR>
@@ -411,11 +439,44 @@ function! <SID>make_filler(width)
   return fill
 endfunction
 
+function! <SID>compare_bufentries(a, b)
+  if s:sort_order == 1
+    if s:tabfriendstoggle
+      if exists("t:next_bufferlist_tab_friends[" . a:a.number . "]") && exists("t:next_bufferlist_tab_friends[" . a:b.number . "]")
+        return t:next_bufferlist_tab_friends[a:a.number] - t:next_bufferlist_tab_friends[a:b.number]
+      endif
+    endif
+    return a:a.number - a:b.number
+  elseif s:sort_order == 2
+    if (a:a.text < a:b.text)
+      return -1
+    elseif (a:a.text > a:b.text)
+      return 1
+    else
+      return 0
+    endif
+  endif
+endfunction
+
+function! <SID>SID()
+  let fullname = expand("<sfile>")
+  return matchstr(fullname, '<SNR>\d\+_')
+endfunction
+
 function! <SID>display_list(displayedbufs, buflist, width)
   setlocal modifiable
   if a:displayedbufs > 0
+    if s:sort_order
+      call sort(a:buflist, function(<SID>SID() . "compare_bufentries"))
+    endif
     " input the buffer list, delete the trailing newline, & fill with blank lines
-    silent! put! =a:buflist
+    let buftext = ""
+
+    for bufentry in a:buflist
+      let buftext .= bufentry.text
+    endfor
+
+    silent! put! =buftext
     " is there any way to NOT delete into a register? bummer...
     "normal! Gdd$
     normal! GkJ
@@ -483,6 +544,7 @@ function! <SID>display_list(displayedbufs, buflist, width)
     noremap <silent> <buffer> p <Nop>
     noremap <silent> <buffer> P <Nop>
     noremap <silent> <buffer> n <Nop>
+    noremap <silent> <buffer> o <Nop>
     noremap <silent> <buffer> <MouseDown> <Nop>
     noremap <silent> <buffer> <MouseUp> <Nop>
     noremap <silent> <buffer> <LeftDrag> <Nop>
@@ -590,7 +652,7 @@ endfunction
 " loads the selected buffer
 function! <SID>load_buffer(...)
   " get the selected buffer
-  let str = <SID>get_selected_buffer()
+  let nr = <SID>get_selected_buffer()
   " kill the buffer list
   call <SID>kill(0, 1)
 
@@ -599,7 +661,7 @@ function! <SID>load_buffer(...)
   endif
 
   " ...and switch to the buffer number
-  exec ":b " . str
+  exec ":b " . nr
 endfunction
 
 function! <SID>load_buffer_into_window(winnr)
@@ -615,14 +677,14 @@ endfunction
 
 " deletes the selected buffer
 function! <SID>delete_buffer()
-  let str = <SID>get_selected_buffer()
-  if !getbufvar(str2nr(str), '&modified')
-    let selected_buffer_window = bufwinnr(str2nr(str))
+  let nr = <SID>get_selected_buffer()
+  if !getbufvar(str2nr(nr), '&modified')
+    let selected_buffer_window = bufwinnr(str2nr(nr))
     if selected_buffer_window != -1
       call <SID>move("down")
-      if <SID>get_selected_buffer() == str
+      if <SID>get_selected_buffer() == nr
         call <SID>move("up")
-        if <SID>get_selected_buffer() == str
+        if <SID>get_selected_buffer() == nr
           call <SID>kill(0, 0)
         else
           call <SID>load_buffer_into_window(selected_buffer_window)
@@ -633,7 +695,7 @@ function! <SID>delete_buffer()
     else
       call <SID>kill(0, 0)
     endif
-    exec ":bdelete " . str
+    exec ":bdelete " . nr
     call <SID>next_bufferlist_toggle(1)
   endif
 endfunction
@@ -672,19 +734,8 @@ function! <SID>delete_foreign_buffers()
 endfunction
 
 function! <SID>get_selected_buffer()
-  " this is our string containing the buffer numbers in
-  " the order of the list (separated by ':')
-  let str = b:bufnumbers
-
-  " remove all numbers BEFORE the one we want
-  let i = 1 | while i < line(".") | let i += 1
-    let str = strpart(str, stridx(str, ':') + 1)
-  endwhile
-
-  " and everything AFTER
-  let str = strpart(str, 0, stridx(str, ':'))
-
-  return str
+  let bufentry = b:buflist[line(".") - 1]
+  return bufentry.number
 endfunction
 
 function! <SID>add_tab_friend()
@@ -694,8 +745,8 @@ function! <SID>add_tab_friend()
 
   let current = bufnr('%')
 
-  if getbufvar(current, '&modifiable') && getbufvar(current, '&buflisted') && current != bufnr("__NEXT_BUFFERLIST__")
-    let t:next_bufferlist_tab_friends[current] = 1
+  if !exists("t:next_bufferlist_tab_friends[" . current . "]") && getbufvar(current, '&modifiable') && getbufvar(current, '&buflisted') && current != bufnr("__NEXT_BUFFERLIST__")
+    let t:next_bufferlist_tab_friends[current] = len(t:next_bufferlist_tab_friends) + 1
   endif
 endfunction
 
@@ -731,15 +782,28 @@ function! <SID>toggle_tab_friends()
   call <SID>next_bufferlist_toggle(1)
 endfunction
 
+function! <SID>toggle_order()
+  if s:sort_order
+    if s:sort_order == 1
+      let s:sort_order = 2
+    else
+      let s:sort_order = 1
+    endif
+
+    call <SID>kill(0, 0)
+    call <SID>next_bufferlist_toggle(1)
+  endif
+endfunction
+
 function! <SID>detach_tab_friend()
-  let str = <SID>get_selected_buffer()
-  if exists('t:next_bufferlist_tab_friends[' . str . ']')
-    let selected_buffer_window = bufwinnr(str2nr(str))
+  let nr = <SID>get_selected_buffer()
+  if exists('t:next_bufferlist_tab_friends[' . nr . ']')
+    let selected_buffer_window = bufwinnr(nr)
     if selected_buffer_window != -1
       call <SID>move("down")
-      if <SID>get_selected_buffer() == str
+      if <SID>get_selected_buffer() == nr
         call <SID>move("up")
-        if <SID>get_selected_buffer() == str
+        if <SID>get_selected_buffer() == nr
           return
         endif
       endif
@@ -747,7 +811,7 @@ function! <SID>detach_tab_friend()
     else
       call <SID>kill(0, 0)
     endif
-    call remove(t:next_bufferlist_tab_friends, str)
+    call remove(t:next_bufferlist_tab_friends, nr)
     call <SID>next_bufferlist_toggle(1)
   endif
 endfunction

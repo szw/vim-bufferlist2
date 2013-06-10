@@ -108,6 +108,10 @@ Use it freely whenever your *all buffers* list view seems messy to you.
 <td>Toggles between tab-friends (the ones related to the current tab) and all buffers</td>
 </tr>
 <tr>
+<td><code>o</code></td>
+<td>Toggles between sorting modes (chronological vs alphanumeric)</td>
+</tr>
+<tr>
 <td><code>q</code> / <code>F2</code>&#42;</td>
 <td>Closes the list <br/>&#42; - depends on settings</td>
 </tr>
@@ -136,6 +140,7 @@ in your `.vimrc`. Here are all possible options of NextBufferList:
     let g:next_bufferlist_set_default_mapping = 0
     let g:next_bufferlist_default_mapping_key = '<F3>'
     let g:next_bufferlist_max_jumps = 200
+    let g:next_bufferlist_default_sort_order = 1 " 0 - no sort, 1 - chronological, 2 - alphanumeric
     hi BufferSelected term=reverse ctermfg=white ctermbg=red cterm=bold
     hi BufferNormal term=NONE ctermfg=black ctermbg=darkcyan cterm=NONE
 
