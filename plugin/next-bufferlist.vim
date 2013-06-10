@@ -333,6 +333,12 @@ function! <SID>set_up_buffer()
   setlocal nowrap
   setlocal nonumber
 
+  if s:tabfriendstoggle
+    let &l:statusline = "NEXT_BUFFERLIST [TAB]"
+  else
+    let &l:statusline = "NEXT_BUFFERLIST [ALL]"
+  endif
+
   if &timeout
     let b:old_timeoutlen = &timeoutlen
     set timeoutlen=10
