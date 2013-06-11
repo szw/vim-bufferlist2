@@ -157,7 +157,7 @@ function! <SID>decorate_with_indicators(name, bufnum)
   let indicators = ' '
 
   if bufwinnr(a:bufnum) != -1
-    let indicators .= '*'
+    let indicators .= '∗'
   endif
   if getbufvar(a:bufnum, '&modified')
     let indicators .= '+'
