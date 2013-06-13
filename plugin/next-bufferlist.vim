@@ -93,7 +93,9 @@ au BufEnter * call <SID>add_jump()
 function! <SID>next_bufferlist_toggle(internal)
   if !a:internal
     let s:tabfriendstoggle = g:next_bufferlist_show_tab_friends
-    let s:sort_order = g:next_bufferlist_default_sort_order
+    if g:next_bufferlist_show_tab_friends && !exists("t:sort_order")
+      let t:sort_order = g:next_bufferlist_default_sort_order
+    endif
   endif
 
   " if we get called and the list is open --> close it
@@ -357,10 +359,10 @@ function! <SID>set_up_buffer()
       let &l:statusline .= " [ALL]"
     endif
 
-    if s:sort_order
-      if s:sort_order == 1
+    if exists("t:sort_order")
+      if t:sort_order == 1
         let &l:statusline .= " [123]"
-      elseif s:sort_order == 2
+      elseif t:sort_order == 2
         let &l:statusline .= " [ABC]"
       endif
     endif
@@ -439,14 +441,14 @@ function! <SID>make_filler(width)
 endfunction
 
 function! <SID>compare_bufentries(a, b)
-  if s:sort_order == 1
+  if t:sort_order == 1
     if s:tabfriendstoggle
       if exists("t:next_bufferlist_tab_friends[" . a:a.number . "]") && exists("t:next_bufferlist_tab_friends[" . a:b.number . "]")
         return t:next_bufferlist_tab_friends[a:a.number] - t:next_bufferlist_tab_friends[a:b.number]
       endif
     endif
     return a:a.number - a:b.number
-  elseif s:sort_order == 2
+  elseif t:sort_order == 2
     if (a:a.text < a:b.text)
       return -1
     elseif (a:a.text > a:b.text)
@@ -465,7 +467,7 @@ endfunction
 function! <SID>display_list(displayedbufs, buflist, width)
   setlocal modifiable
   if a:displayedbufs > 0
-    if s:sort_order
+    if exists("t:sort_order")
       call sort(a:buflist, function(<SID>SID() . "compare_bufentries"))
     endif
     " input the buffer list, delete the trailing newline, & fill with blank lines
@@ -782,11 +784,11 @@ function! <SID>toggle_tab_friends()
 endfunction
 
 function! <SID>toggle_order()
-  if s:sort_order
-    if s:sort_order == 1
-      let s:sort_order = 2
+  if exists("t:sort_order")
+    if t:sort_order == 1
+      let t:sort_order = 2
     else
-      let s:sort_order = 1
+      let t:sort_order = 1
     endif
 
     call <SID>kill(0, 0)
